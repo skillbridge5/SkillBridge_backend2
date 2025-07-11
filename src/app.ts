@@ -1,11 +1,36 @@
 import express from 'express';
 import cors from 'cors';
 import pool from './config/database';
+import authRoutes from './routes/auth';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJSDoc from 'swagger-jsdoc';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
+
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'SkillBridge API',
+    version: '1.0.0',
+    description: 'API documentation for the SkillBridge e-learning backend',
+  },
+  servers: [
+    { url: 'http://localhost:4000', description: 'Development server' },
+  ],
+};
+
+const swaggerOptions = {
+  swaggerDefinition,
+  apis: ['./src/routes/*.ts'],
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
