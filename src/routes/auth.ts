@@ -7,6 +7,7 @@
 
 import { Router } from 'express';
 import { register, login, logout } from '../controllers/authController';
+import { authenticateJWT } from '../middlewares/authMiddleware';
 
 const router = Router();
 
@@ -124,6 +125,8 @@ router.post('/login', login);
  *     description: |
  *       Stateless logout. The backend does not store or invalidate tokens. The client should delete the access and refresh tokens locally.
  *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Logout successful
@@ -136,6 +139,6 @@ router.post('/login', login);
  *                   type: string
  *                   example: Logout successful
  */
-router.post('/logout', logout);
+router.post('/logout', authenticateJWT, logout);
 
 export default router; 

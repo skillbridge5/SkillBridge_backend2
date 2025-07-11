@@ -21,6 +21,18 @@ const swaggerDefinition = {
   servers: [
     { url: 'http://localhost:4000', description: 'Development server' },
   ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
+  },
+  security: [
+    { bearerAuth: [] }
+  ],
 };
 
 const swaggerOptions = {
