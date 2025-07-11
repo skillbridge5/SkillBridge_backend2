@@ -24,6 +24,7 @@ const swaggerDefinition = {
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Development server' },
+    { url: 'https://skillbridge-backend-w2s4.onrender.com', description: 'Production server (Render)' },
   ],
   components: {
     securitySchemes: {
