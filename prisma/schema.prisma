@@ -25,6 +25,18 @@ enum CategoryStatus {
   INACTIVE
 }
 
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -37,6 +49,7 @@ model User {
   studentProfile    StudentProfile?
   instructorProfile InstructorProfile?
   adminProfile      AdminProfile?
+  coursesTaught    Course[] @relation("InstructorCourses")
 }
 
 model StudentProfile {
@@ -70,4 +83,60 @@ model Category {
   status      CategoryStatus @default(ACTIVE)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  courses     Course[]
+}
+
+model Course {
+  id                String         @id @default(uuid())
+  title             String
+  shortDescription  String
+  detailedDescription String
+  imageUrl          String?
+  priceOriginal     Float
+  priceDiscounted   Float
+  status            CourseStatus   @default(DRAFT)
+  level             CourseLevel
+  duration          String
+  categoryId        String
+  category          Category       @relation(fields: [categoryId], references: [id])
+  instructorId      String
+  instructor        User           @relation("InstructorCourses", fields: [instructorId], references: [id])
+  modules           CourseModule[]
+  learningOutcomes  LearningOutcome[]
+  prerequisites     Prerequisite[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+model CourseModule {
+  id        String       @id @default(uuid())
+  courseId  String
+  course    Course       @relation(fields: [courseId], references: [id])
+  title     String
+  duration  String
+  order     Int
+  lessons   CourseLesson[]
+}
+
+model CourseLesson {
+  id        String       @id @default(uuid())
+  moduleId  String
+  module    CourseModule @relation(fields: [moduleId], references: [id])
+  title     String
+  duration  String
+  order     Int
+}
+
+model LearningOutcome {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  text      String
+}
+
+model Prerequisite {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  text      String
 }
