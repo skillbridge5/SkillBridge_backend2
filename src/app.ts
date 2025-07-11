@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import pool from './config/database';
 import authRoutes from './routes/auth';
+import categoryRoutes from './routes/category';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 
@@ -10,6 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
+app.use('/api/categories', categoryRoutes);
 
 const swaggerDefinition = {
   openapi: '3.0.0',

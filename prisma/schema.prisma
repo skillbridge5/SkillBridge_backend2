@@ -20,6 +20,11 @@ enum Role {
   STUDENT
 }
 
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -56,4 +61,13 @@ model AdminProfile {
   userId    String   @unique
   adminLevel Int?
   // Add more admin-specific fields here
+}
+
+model Category {
+  id          String         @id @default(uuid())
+  name        String
+  description String
+  status      CategoryStatus @default(ACTIVE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
