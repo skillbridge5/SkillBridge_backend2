@@ -121,10 +121,20 @@ router.post('/login', login);
  * /api/auth/logout:
  *   post:
  *     summary: Logout a user
+ *     description: |
+ *       Stateless logout. The backend does not store or invalidate tokens. The client should delete the access and refresh tokens locally.
  *     tags: [Auth]
  *     responses:
  *       200:
  *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Logout successful
  */
 router.post('/logout', logout);
 

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,11 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   role: z.enum(['ADMIN']).default('ADMIN'),
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 export const register = async (req: Request, res: Response) => {
@@ -48,8 +54,57 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  // Login logic will go here
-  res.json({ message: 'Login endpoint' });
+  try {
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues });
+    }
+    const { email, password } = parsed.data;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        adminProfile: true,
+        instructorProfile: true,
+        studentProfile: true,
+      },
+    });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Prepare profile
+    let profile = null;
+    if (user.role === 'ADMIN') profile = user.adminProfile;
+    if (user.role === 'INSTRUCTOR') profile = user.instructorProfile;
+    if (user.role === 'STUDENT') profile = user.studentProfile;
+
+    // Generate tokens
+    const payload = { id: user.id, email: user.email, role: user.role };
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '15m' });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '7d' });
+
+    return res.status(200).json({
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profile,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: (error as Error).message });
+  }
 };
 
 export const logout = async (req: Request, res: Response) => {
