@@ -37,6 +37,25 @@ enum CourseLevel {
   ALL_LEVELS
 }
 
+enum InstructorStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Expertise {
+  id          String                 @id @default(uuid())
+  name        String                 @unique
+  instructors InstructorExpertise[]
+}
+
+model InstructorExpertise {
+  id             String             @id @default(uuid())
+  instructorId   String
+  expertiseId    String
+  instructor     InstructorProfile  @relation(fields: [instructorId], references: [id])
+  expertise      Expertise          @relation(fields: [expertiseId], references: [id])
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -61,11 +80,16 @@ model StudentProfile {
 }
 
 model InstructorProfile {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique
-  bio       String?
-  // Add more instructor-specific fields here
+  id                  String                 @id @default(uuid())
+  user                User                   @relation(fields: [userId], references: [id])
+  userId              String                 @unique
+  phone               String?
+  yearsOfExperience   Int?
+  bio                 String?
+  status              InstructorStatus       @default(ACTIVE)
+  rating              Float?                 // average rating
+  students            Int?                   // total students
+  instructorExpertise InstructorExpertise[]  // relation to expertise
 }
 
 model AdminProfile {
