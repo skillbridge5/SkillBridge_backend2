@@ -1,11 +1,7 @@
 import { Router } from 'express';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 import {
-  getAllCourses, getCourseById, createCourse, updateCourse, deleteCourse,
-  getModulesByCourse, createModule, updateModule, deleteModule,
-  getLessonsByModule, createLesson, updateLesson, deleteLesson,
-  getLearningOutcomesByCourse, createLearningOutcome, updateLearningOutcome, deleteLearningOutcome,
-  getPrerequisitesByCourse, createPrerequisite, updatePrerequisite, deletePrerequisite
+  getAllCourses, getCourseById, createCourseWithDetails, updateCourseWithDetails, deleteCourse
 } from '../controllers/courseController';
 
 const router = Router();
@@ -21,13 +17,119 @@ const router = Router();
  * @swagger
  * /api/courses:
  *   get:
- *     summary: Get all courses
+ *     summary: Get all courses with complete details
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of courses
+ *         description: List of courses with modules, lessons, outcomes, and prerequisites
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   shortDescription:
+ *                     type: string
+ *                   detailedDescription:
+ *                     type: string
+ *                   imageUrl:
+ *                     type: string
+ *                   priceOriginal:
+ *                     type: number
+ *                   priceDiscounted:
+ *                     type: number
+ *                   status:
+ *                     type: string
+ *                     enum: [DRAFT, PUBLISHED]
+ *                   level:
+ *                     type: string
+ *                     enum: [BEGINNER, INTERMEDIATE, ADVANCED, ALL_LEVELS]
+ *                   duration:
+ *                     type: string
+ *                   categoryId:
+ *                     type: string
+ *                   instructorId:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   category:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                         enum: [ACTIVE, INACTIVE]
+ *                   instructor:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       role:
+ *                         type: string
+ *                   modules:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         duration:
+ *                           type: string
+ *                         order:
+ *                           type: integer
+ *                         lessons:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               title:
+ *                                 type: string
+ *                               duration:
+ *                                 type: string
+ *                               order:
+ *                                 type: integer
+ *                   learningOutcomes:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         text:
+ *                           type: string
+ *                   prerequisites:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         text:
+ *                           type: string
  */
 router.get('/', authenticateJWT, getAllCourses);
 
@@ -35,7 +137,7 @@ router.get('/', authenticateJWT, getAllCourses);
  * @swagger
  * /api/courses/{id}:
  *   get:
- *     summary: Get a course by ID
+ *     summary: Get a course by ID with complete details
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
@@ -45,9 +147,114 @@ router.get('/', authenticateJWT, getAllCourses);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Course ID
  *     responses:
  *       200:
- *         description: Course object
+ *         description: Course object with all related data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 title:
+ *                   type: string
+ *                 shortDescription:
+ *                   type: string
+ *                 detailedDescription:
+ *                   type: string
+ *                 imageUrl:
+ *                   type: string
+ *                 priceOriginal:
+ *                   type: number
+ *                 priceDiscounted:
+ *                   type: number
+ *                 status:
+ *                   type: string
+ *                   enum: [DRAFT, PUBLISHED]
+ *                 level:
+ *                   type: string
+ *                   enum: [BEGINNER, INTERMEDIATE, ADVANCED, ALL_LEVELS]
+ *                 duration:
+ *                   type: string
+ *                 categoryId:
+ *                   type: string
+ *                 instructorId:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 category:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       enum: [ACTIVE, INACTIVE]
+ *                 instructor:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                 modules:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       title:
+ *                         type: string
+ *                       duration:
+ *                         type: string
+ *                       order:
+ *                         type: integer
+ *                       lessons:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             title:
+ *                               type: string
+ *                             duration:
+ *                               type: string
+ *                             order:
+ *                               type: integer
+ *                 learningOutcomes:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       text:
+ *                         type: string
+ *                 prerequisites:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       text:
+ *                         type: string
  *       404:
  *         description: Course not found
  */
@@ -55,9 +262,9 @@ router.get('/:id', authenticateJWT, getCourseById);
 
 /**
  * @swagger
- * /api/courses:
+ * /api/courses/comprehensive:
  *   post:
- *     summary: Create a new course
+ *     summary: Create a new course with all details (modules, lessons, outcomes, prerequisites)
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
@@ -73,7 +280,6 @@ router.get('/:id', authenticateJWT, getCourseById);
  *               - detailedDescription
  *               - priceOriginal
  *               - priceDiscounted
- *               - status
  *               - level
  *               - duration
  *               - categoryId
@@ -81,39 +287,146 @@ router.get('/:id', authenticateJWT, getCourseById);
  *             properties:
  *               title:
  *                 type: string
+ *                 example: "Complete Web Development Bootcamp"
  *               shortDescription:
  *                 type: string
+ *                 example: "Learn HTML, CSS, JavaScript, React, Node.js and more"
  *               detailedDescription:
  *                 type: string
+ *                 example: "This comprehensive course is designed to take you from beginner to professional in web development..."
  *               imageUrl:
  *                 type: string
+ *                 example: "https://example.com/course-image.jpg"
  *               priceOriginal:
  *                 type: number
+ *                 example: 99.99
  *               priceDiscounted:
  *                 type: number
+ *                 example: 79.99
  *               status:
  *                 type: string
  *                 enum: [DRAFT, PUBLISHED]
+ *                 default: DRAFT
  *               level:
  *                 type: string
  *                 enum: [BEGINNER, INTERMEDIATE, ADVANCED, ALL_LEVELS]
+ *                 example: BEGINNER
  *               duration:
  *                 type: string
+ *                 example: "48 hours"
  *               categoryId:
  *                 type: string
+ *                 example: "category-uuid"
  *               instructorId:
  *                 type: string
+ *                 example: "instructor-uuid"
+ *               slug:
+ *                 type: string
+ *                 example: "web-development-bootcamp"
+ *               rating:
+ *                 type: number
+ *                 example: 4.8
+ *               reviews:
+ *                 type: number
+ *                 example: 1245
+ *               students:
+ *                 type: number
+ *                 example: 15000
+ *               enrollmentYear:
+ *                 type: number
+ *                 example: 2025
+ *               learningOutcomes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Build 16+ web development projects", "Learn HTML5, CSS3, JavaScript"]
+ *               prerequisites:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Basic computer skills", "No prior programming experience required"]
+ *               curriculum:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                       example: "Introduction to Web Development"
+ *                     duration:
+ *                       type: string
+ *                       example: "3 hours"
+ *                     lessons:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                             example: "Course Overview"
+ *                           duration:
+ *                             type: string
+ *                             example: "15 min"
  *     responses:
  *       201:
- *         description: Course created
+ *         description: Course created with all details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 title:
+ *                   type: string
+ *                 shortDescription:
+ *                   type: string
+ *                 detailedDescription:
+ *                   type: string
+ *                 imageUrl:
+ *                   type: string
+ *                 priceOriginal:
+ *                   type: number
+ *                 priceDiscounted:
+ *                   type: number
+ *                 status:
+ *                   type: string
+ *                 level:
+ *                   type: string
+ *                 duration:
+ *                   type: string
+ *                 categoryId:
+ *                   type: string
+ *                 instructorId:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 category:
+ *                   type: object
+ *                 instructor:
+ *                   type: object
+ *                 modules:
+ *                   type: array
+ *                 learningOutcomes:
+ *                   type: array
+ *                 prerequisites:
+ *                   type: array
+ *       400:
+ *         description: Missing required fields
+ *       500:
+ *         description: Server error
  */
-router.post('/', authenticateJWT, createCourse);
+router.post('/comprehensive', authenticateJWT, createCourseWithDetails);
 
 /**
  * @swagger
- * /api/courses/{id}:
+ * /api/courses/{id}/comprehensive:
  *   put:
- *     summary: Update a course
+ *     summary: Update a course with all details (modules, lessons, outcomes, prerequisites)
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
@@ -123,6 +436,7 @@ router.post('/', authenticateJWT, createCourse);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Course ID
  *     requestBody:
  *       required: true
  *       content:
@@ -135,7 +449,6 @@ router.post('/', authenticateJWT, createCourse);
  *               - detailedDescription
  *               - priceOriginal
  *               - priceDiscounted
- *               - status
  *               - level
  *               - duration
  *               - categoryId
@@ -143,39 +456,147 @@ router.post('/', authenticateJWT, createCourse);
  *             properties:
  *               title:
  *                 type: string
+ *                 example: "Complete Web Development Bootcamp"
  *               shortDescription:
  *                 type: string
+ *                 example: "Learn HTML, CSS, JavaScript, React, Node.js and more"
  *               detailedDescription:
  *                 type: string
+ *                 example: "This comprehensive course is designed to take you from beginner to professional in web development..."
  *               imageUrl:
  *                 type: string
+ *                 example: "https://example.com/course-image.jpg"
  *               priceOriginal:
  *                 type: number
+ *                 example: 99.99
  *               priceDiscounted:
  *                 type: number
+ *                 example: 79.99
  *               status:
  *                 type: string
  *                 enum: [DRAFT, PUBLISHED]
  *               level:
  *                 type: string
  *                 enum: [BEGINNER, INTERMEDIATE, ADVANCED, ALL_LEVELS]
+ *                 example: BEGINNER
  *               duration:
  *                 type: string
+ *                 example: "48 hours"
  *               categoryId:
  *                 type: string
+ *                 example: "category-uuid"
  *               instructorId:
  *                 type: string
+ *                 example: "instructor-uuid"
+ *               slug:
+ *                 type: string
+ *                 example: "web-development-bootcamp"
+ *               rating:
+ *                 type: number
+ *                 example: 4.8
+ *               reviews:
+ *                 type: number
+ *                 example: 1245
+ *               students:
+ *                 type: number
+ *                 example: 15000
+ *               enrollmentYear:
+ *                 type: number
+ *                 example: 2025
+ *               learningOutcomes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Build 16+ web development projects", "Learn HTML5, CSS3, JavaScript"]
+ *               prerequisites:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Basic computer skills", "No prior programming experience required"]
+ *               curriculum:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                       example: "Introduction to Web Development"
+ *                     duration:
+ *                       type: string
+ *                       example: "3 hours"
+ *                     lessons:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           title:
+ *                             type: string
+ *                             example: "Course Overview"
+ *                           duration:
+ *                             type: string
+ *                             example: "15 min"
  *     responses:
  *       200:
- *         description: Course updated
+ *         description: Course updated with all details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 title:
+ *                   type: string
+ *                 shortDescription:
+ *                   type: string
+ *                 detailedDescription:
+ *                   type: string
+ *                 imageUrl:
+ *                   type: string
+ *                 priceOriginal:
+ *                   type: number
+ *                 priceDiscounted:
+ *                   type: number
+ *                 status:
+ *                   type: string
+ *                 level:
+ *                   type: string
+ *                 duration:
+ *                   type: string
+ *                 categoryId:
+ *                   type: string
+ *                 instructorId:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 category:
+ *                   type: object
+ *                 instructor:
+ *                   type: object
+ *                 modules:
+ *                   type: array
+ *                 learningOutcomes:
+ *                   type: array
+ *                 prerequisites:
+ *                   type: array
+ *       400:
+ *         description: Missing required fields
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
  */
-router.put('/:id', authenticateJWT, updateCourse);
+router.put('/:id/comprehensive', authenticateJWT, updateCourseWithDetails);
 
 /**
  * @swagger
  * /api/courses/{id}:
  *   delete:
- *     summary: Delete a course
+ *     summary: Delete a course and all related data
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
@@ -185,430 +606,23 @@ router.put('/:id', authenticateJWT, updateCourse);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Course ID
  *     responses:
  *       200:
- *         description: Course deleted
+ *         description: Course and all related data deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Course deleted"
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
  */
 router.delete('/:id', authenticateJWT, deleteCourse);
-
-/**
- * @swagger
- * /api/courses/{courseId}/modules:
- *   get:
- *     summary: Get modules for a course
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: courseId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of modules
- */
-router.get('/:courseId/modules', authenticateJWT, getModulesByCourse);
-
-/**
- * @swagger
- * /api/courses/modules:
- *   post:
- *     summary: Create a module
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - courseId
- *               - title
- *               - duration
- *               - order
- *             properties:
- *               courseId:
- *                 type: string
- *               title:
- *                 type: string
- *               duration:
- *                 type: string
- *               order:
- *                 type: integer
- *     responses:
- *       201:
- *         description: Module created
- */
-router.post('/modules', authenticateJWT, createModule);
-
-/**
- * @swagger
- * /api/courses/modules/{id}:
- *   put:
- *     summary: Update a module
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *               - duration
- *               - order
- *             properties:
- *               title:
- *                 type: string
- *               duration:
- *                 type: string
- *               order:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Module updated
- */
-router.put('/modules/:id', authenticateJWT, updateModule);
-
-/**
- * @swagger
- * /api/courses/modules/{id}:
- *   delete:
- *     summary: Delete a module
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Module deleted
- */
-router.delete('/modules/:id', authenticateJWT, deleteModule);
-
-/**
- * @swagger
- * /api/courses/modules/{moduleId}/lessons:
- *   get:
- *     summary: Get lessons for a module
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: moduleId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of lessons
- */
-router.get('/modules/:moduleId/lessons', authenticateJWT, getLessonsByModule);
-
-/**
- * @swagger
- * /api/courses/lessons:
- *   post:
- *     summary: Create a lesson
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - moduleId
- *               - title
- *               - duration
- *               - order
- *             properties:
- *               moduleId:
- *                 type: string
- *               title:
- *                 type: string
- *               duration:
- *                 type: string
- *               order:
- *                 type: integer
- *     responses:
- *       201:
- *         description: Lesson created
- */
-router.post('/lessons', authenticateJWT, createLesson);
-
-/**
- * @swagger
- * /api/courses/lessons/{id}:
- *   put:
- *     summary: Update a lesson
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - title
- *               - duration
- *               - order
- *             properties:
- *               title:
- *                 type: string
- *               duration:
- *                 type: string
- *               order:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Lesson updated
- */
-router.put('/lessons/:id', authenticateJWT, updateLesson);
-
-/**
- * @swagger
- * /api/courses/lessons/{id}:
- *   delete:
- *     summary: Delete a lesson
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Lesson deleted
- */
-router.delete('/lessons/:id', authenticateJWT, deleteLesson);
-
-/**
- * @swagger
- * /api/courses/{courseId}/learning-outcomes:
- *   get:
- *     summary: Get learning outcomes for a course
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: courseId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of learning outcomes
- */
-router.get('/:courseId/learning-outcomes', authenticateJWT, getLearningOutcomesByCourse);
-
-/**
- * @swagger
- * /api/courses/learning-outcomes:
- *   post:
- *     summary: Create a learning outcome
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - courseId
- *               - text
- *             properties:
- *               courseId:
- *                 type: string
- *               text:
- *                 type: string
- *     responses:
- *       201:
- *         description: Learning outcome created
- */
-router.post('/learning-outcomes', authenticateJWT, createLearningOutcome);
-
-/**
- * @swagger
- * /api/courses/learning-outcomes/{id}:
- *   put:
- *     summary: Update a learning outcome
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - text
- *             properties:
- *               text:
- *                 type: string
- *     responses:
- *       200:
- *         description: Learning outcome updated
- */
-router.put('/learning-outcomes/:id', authenticateJWT, updateLearningOutcome);
-
-/**
- * @swagger
- * /api/courses/learning-outcomes/{id}:
- *   delete:
- *     summary: Delete a learning outcome
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Learning outcome deleted
- */
-router.delete('/learning-outcomes/:id', authenticateJWT, deleteLearningOutcome);
-
-/**
- * @swagger
- * /api/courses/{courseId}/prerequisites:
- *   get:
- *     summary: Get prerequisites for a course
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: courseId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of prerequisites
- */
-router.get('/:courseId/prerequisites', authenticateJWT, getPrerequisitesByCourse);
-
-/**
- * @swagger
- * /api/courses/prerequisites:
- *   post:
- *     summary: Create a prerequisite
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - courseId
- *               - text
- *             properties:
- *               courseId:
- *                 type: string
- *               text:
- *                 type: string
- *     responses:
- *       201:
- *         description: Prerequisite created
- */
-router.post('/prerequisites', authenticateJWT, createPrerequisite);
-
-/**
- * @swagger
- * /api/courses/prerequisites/{id}:
- *   put:
- *     summary: Update a prerequisite
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - text
- *             properties:
- *               text:
- *                 type: string
- *     responses:
- *       200:
- *         description: Prerequisite updated
- */
-router.put('/prerequisites/:id', authenticateJWT, updatePrerequisite);
-
-/**
- * @swagger
- * /api/courses/prerequisites/{id}:
- *   delete:
- *     summary: Delete a prerequisite
- *     tags: [Courses]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Prerequisite deleted
- */
-router.delete('/prerequisites/:id', authenticateJWT, deletePrerequisite);
 
 export default router; 
