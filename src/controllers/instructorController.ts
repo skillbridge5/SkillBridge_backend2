@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma';
+import bcrypt from 'bcrypt';
 
 // Helper to include expertise names in instructor queries
 const instructorInclude = {
@@ -52,11 +53,29 @@ export const getInstructorById = async (req: Request, res: Response) => {
   }
 };
 
-// POST /api/instructors
+// POST /api/instructors (now accepts name and email)
 export const createInstructor = async (req: Request, res: Response) => {
   try {
-    const { userId, phone, yearsOfExperience, bio, status, rating, students, expertise } = req.body;
-    // expertise: string[] of expertise names
+    const { name, email, phone, yearsOfExperience, bio, status, rating, students, expertise } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'User with this email already exists' });
+    }
+    // Create user with default password
+    const defaultPassword = await bcrypt.hash('changeme123', 10);
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: defaultPassword,
+        role: 'INSTRUCTOR',
+      },
+    });
+    // Upsert expertise
     let expertiseIds: string[] = [];
     if (Array.isArray(expertise)) {
       for (const name of expertise) {
@@ -68,9 +87,10 @@ export const createInstructor = async (req: Request, res: Response) => {
         expertiseIds.push(exp.id);
       }
     }
+    // Create instructor profile
     const instructor = await prisma.instructorProfile.create({
       data: {
-        userId,
+        userId: user.id,
         phone,
         yearsOfExperience,
         bio,
