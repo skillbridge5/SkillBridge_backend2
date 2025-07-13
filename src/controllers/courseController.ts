@@ -83,7 +83,7 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
     }
 
     // Use transaction to ensure all data is created atomically
-    const result = await prisma.$transaction(async (tx) => {
+    const createdCourse = await prisma.$transaction(async (tx) => {
       // Create the main course
       const course = await tx.course.create({
         data: {
@@ -149,20 +149,23 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
         }
       }
 
-      // Return the complete course with all related data
-      return await tx.course.findUnique({
-        where: { id: course.id },
-        include: {
-          category: true,
-          instructor: true,
-          modules: {
-            include: { lessons: { orderBy: { order: 'asc' } } },
-            orderBy: { order: 'asc' }
-          },
-          learningOutcomes: true,
-          prerequisites: true
-        }
-      });
+      // Only return the new course ID
+      return course.id;
+    });
+
+    // Fetch the complete course with all related data OUTSIDE the transaction
+    const result = await prisma.course.findUnique({
+      where: { id: createdCourse },
+      include: {
+        category: true,
+        instructor: true,
+        modules: {
+          include: { lessons: { orderBy: { order: 'asc' } } },
+          orderBy: { order: 'asc' }
+        },
+        learningOutcomes: true,
+        prerequisites: true
+      }
     });
 
     res.status(201).json(result);
