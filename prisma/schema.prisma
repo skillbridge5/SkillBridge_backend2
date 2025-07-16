@@ -37,6 +37,19 @@ enum CourseLevel {
   ALL_LEVELS
 }
 
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentMethod {
+  TELEBIRR
+  CBE
+  AMOLE
+  OTHER
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -49,29 +62,31 @@ model User {
   studentProfile    StudentProfile?
   instructorProfile InstructorProfile?
   adminProfile      AdminProfile?
-  coursesTaught    Course[] @relation("InstructorCourses")
+  coursesTaught     Course[]           @relation("InstructorCourses")
+
+  StudentApplication StudentApplication[]
 }
 
 model StudentProfile {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique
-  grade     String?
+  id     String  @id @default(uuid())
+  user   User    @relation(fields: [userId], references: [id])
+  userId String  @unique
+  grade  String?
   // Add more student-specific fields here
 }
 
 model InstructorProfile {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique
-  bio       String?
+  id     String  @id @default(uuid())
+  user   User    @relation(fields: [userId], references: [id])
+  userId String  @unique
+  bio    String?
   // Add more instructor-specific fields here
 }
 
 model AdminProfile {
-  id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique
+  id         String @id @default(uuid())
+  user       User   @relation(fields: [userId], references: [id])
+  userId     String @unique
   adminLevel Int?
   // Add more admin-specific fields here
 }
@@ -87,56 +102,92 @@ model Category {
 }
 
 model Course {
-  id                String         @id @default(uuid())
-  title             String
-  shortDescription  String
+  id                  String            @id @default(uuid())
+  title               String
+  shortDescription    String
   detailedDescription String
-  imageUrl          String?
-  priceOriginal     Float
-  priceDiscounted   Float
-  status            CourseStatus   @default(DRAFT)
-  level             CourseLevel
-  duration          String
-  categoryId        String
-  category          Category       @relation(fields: [categoryId], references: [id])
-  instructorId      String
-  instructor        User           @relation("InstructorCourses", fields: [instructorId], references: [id])
-  modules           CourseModule[]
-  learningOutcomes  LearningOutcome[]
-  prerequisites     Prerequisite[]
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  imageUrl            String?
+  priceOriginal       Float
+  priceDiscounted     Float
+  status              CourseStatus      @default(DRAFT)
+  level               CourseLevel
+  duration            String
+  categoryId          String
+  category            Category          @relation(fields: [categoryId], references: [id])
+  instructorId        String
+  instructor          User              @relation("InstructorCourses", fields: [instructorId], references: [id])
+  modules             CourseModule[]
+  learningOutcomes    LearningOutcome[]
+  prerequisites       Prerequisite[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  StudentApplication StudentApplication[]
 }
 
 model CourseModule {
-  id        String       @id @default(uuid())
-  courseId  String
-  course    Course       @relation(fields: [courseId], references: [id])
-  title     String
-  duration  String
-  order     Int
-  lessons   CourseLesson[]
+  id       String         @id @default(uuid())
+  courseId String
+  course   Course         @relation(fields: [courseId], references: [id])
+  title    String
+  duration String
+  order    Int
+  lessons  CourseLesson[]
 }
 
 model CourseLesson {
-  id        String       @id @default(uuid())
-  moduleId  String
-  module    CourseModule @relation(fields: [moduleId], references: [id])
-  title     String
-  duration  String
-  order     Int
+  id       String       @id @default(uuid())
+  moduleId String
+  module   CourseModule @relation(fields: [moduleId], references: [id])
+  title    String
+  duration String
+  order    Int
 }
 
 model LearningOutcome {
-  id        String   @id @default(uuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
-  text      String
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+  text     String
 }
 
 model Prerequisite {
-  id        String   @id @default(uuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
-  text      String
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
+  text     String
+}
+
+model StudentApplication {
+  id               String            @id @default(uuid())
+  studentId        String
+  student          User              @relation(fields: [studentId], references: [id])
+  courseId         String
+  course           Course            @relation(fields: [courseId], references: [id])
+  paymentMethod    PaymentMethod
+  paymentReference String
+  status           ApplicationStatus @default(PENDING)
+  submittedAt      DateTime          @default(now())
+  reviewedAt       DateTime?
+  reviewedBy       String? // Admin
+  adminNotes       String?
+  marketingSource  String?
+
+  // Personal details
+  fullName       String
+  dateOfBirth    DateTime
+  gender         String
+  university     String?
+  email          String
+  phone          String
+  telegramHandle String?
+  address        String
+
+  // Receipt handling
+  receiptUrl      String?
+  receiptVerified Boolean @default(false)
+
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
 }

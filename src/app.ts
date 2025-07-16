@@ -6,14 +6,25 @@ import categoryRoutes from './routes/category';
 import courseRoutes from './routes/course';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
+import applicationRoutes from './routes/application.routes';
+import path from 'path';
+import { existsSync, mkdirSync } from 'fs';
+import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
+
 
 app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/applications', applicationRoutes);
+
+const uploadsDir = path.join(__dirname, 'uploads/receipts');
+if (!existsSync(uploadsDir)) {
+  mkdirSync(uploadsDir, { recursive: true });
+}
 
 const swaggerDefinition = {
   openapi: '3.0.0',
@@ -52,6 +63,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+app.use(errorHandler);
 
 
 export default app; 

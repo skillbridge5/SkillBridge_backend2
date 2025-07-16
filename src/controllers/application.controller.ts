@@ -1,0 +1,168 @@
+import { Request, Response } from 'express';
+import prisma from '../config/prisma';
+import { ApplicationStatus } from '@prisma/client';
+import path from 'path';
+import { existsSync } from 'fs';
+import { getReceiptPath } from '../utils/fileUpload';
+import { ApplicationCreateInput, ApplicationUpdateInput } from '../middlewares/validators/applicationValidation';
+
+export const getAllApplications = async (req: Request, res: Response) => {
+  try {
+    const { status, search, courseId } = req.query;
+
+    const applications = await prisma.studentApplication.findMany({
+      where: {
+        status: status as ApplicationStatus,
+        courseId: courseId as string,
+        OR: search ? [
+          { fullName: { contains: search as string, mode: 'insensitive' } },
+          { email: { contains: search as string, mode: 'insensitive' } },
+          { paymentReference: { contains: search as string, mode: 'insensitive' } }
+        ] : undefined
+      },
+      include: {
+        course: { select: { title: true } },
+        student: { select: { name: true } }
+      },
+      orderBy: { submittedAt: 'desc' }
+    });
+
+    res.json(applications);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+export const getApplicationById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const application = await prisma.studentApplication.findUnique({
+      where: { id },
+      include: {
+        course: { select: { title: true } },
+        student: { select: { name: true } }
+      }
+    });
+
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
+
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'INSTRUCTOR' &&
+        application.studentId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    res.json(application);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+export const createApplication = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
+
+    const input: ApplicationCreateInput = req.body;
+
+    const course = await prisma.course.findUnique({ where: { id: input.courseId } });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    const application = await prisma.studentApplication.create({
+      data: {
+        studentId: req.user.id,
+        ...input
+      }
+    });
+
+    res.status(201).json(application);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+};
+
+export const updateApplication = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const input: ApplicationUpdateInput = req.body;
+
+    const application = await prisma.studentApplication.update({
+      where: { id },
+      data: {
+        ...input,
+        reviewedAt: input.status ? new Date() : undefined,
+        reviewedBy: input.status ? req.user.id : undefined
+      }
+    });
+
+    res.json(application);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+};
+
+export const getUserApplications = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
+
+    const applications = await prisma.studentApplication.findMany({
+      where: { studentId: req.user.id },
+      include: {
+        course: { select: { title: true } }
+      },
+      orderBy: { submittedAt: 'desc' }
+    });
+
+    res.json(applications);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+export const uploadApplicationReceipt = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
+    if (!req.file || !('path' in req.file)) return res.status(400).json({ error: 'No file uploaded' });
+
+    const { id } = req.params;
+
+    const cloudinaryUrl = (req.file as any).path;
+
+    const application = await prisma.studentApplication.update({
+      where: { id, studentId: req.user.id },
+      data: { receiptUrl: cloudinaryUrl }
+    });
+
+    res.json(application);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+};
+
+
+export const downloadApplicationReceipt = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
+
+    const { id } = req.params;
+    const application = await prisma.studentApplication.findUnique({
+      where: { id },
+      select: { receiptUrl: true, studentId: true }
+    });
+
+    if (!application?.receiptUrl) return res.status(404).json({ error: 'Receipt not found' });
+
+    if (application.studentId !== req.user.id &&
+        req.user.role !== 'ADMIN' &&
+        req.user.role !== 'INSTRUCTOR') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    res.json({ url: application.receiptUrl });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+
