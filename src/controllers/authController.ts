@@ -88,7 +88,7 @@ export const login = async (req: Request, res: Response) => {
 
     // Generate tokens
     const payload = { id: user.id, email: user.email, role: user.role };
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '15m' });
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '10h' });
     const refreshToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '7d' });
 
     return res.status(200).json({

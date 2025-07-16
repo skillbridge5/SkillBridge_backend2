@@ -4,6 +4,7 @@ import pool from './config/database';
 import authRoutes from './routes/auth';
 import categoryRoutes from './routes/category';
 import courseRoutes from './routes/course';
+import instructorRoutes from './routes/instructor';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import applicationRoutes from './routes/application.routes';
@@ -26,6 +27,8 @@ if (!existsSync(uploadsDir)) {
   mkdirSync(uploadsDir, { recursive: true });
 }
 
+app.use('/api/instructors', instructorRoutes);
+
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
@@ -43,6 +46,71 @@ const swaggerDefinition = {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
+      },
+    },
+    schemas: {
+      InstructorResponse: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          userId: { type: 'string' },
+          phone: { type: 'string', nullable: true },
+          yearsOfExperience: { type: 'integer', nullable: true },
+          bio: { type: 'string', nullable: true },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'] },
+          rating: { type: 'number', nullable: true },
+          students: { type: 'integer', nullable: true },
+          expertise: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Array of expertise names',
+          },
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+              role: { type: 'string' },
+            },
+          },
+        },
+      },
+      InstructorCreateRequest: {
+        type: 'object',
+        required: ['name', 'email'],
+        properties: {
+          name: { type: 'string', example: 'John Smith' },
+          email: { type: 'string', example: 'john.smith@edutech.com' },
+          phone: { type: 'string', example: '+1234567890' },
+          yearsOfExperience: { type: 'integer', example: 8 },
+          bio: { type: 'string', example: 'Experienced full-stack developer...' },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' },
+          rating: { type: 'number', example: 4.8 },
+          students: { type: 'integer', example: 1245 },
+          expertise: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Array of expertise names',
+            example: ['Web Development', 'JavaScript', 'React'],
+          },
+        },
+      },
+      InstructorUpdateRequest: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string' },
+          yearsOfExperience: { type: 'integer' },
+          bio: { type: 'string' },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'] },
+          rating: { type: 'number' },
+          students: { type: 'integer' },
+          expertise: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Array of expertise names',
+          },
+        },
       },
     },
   },
