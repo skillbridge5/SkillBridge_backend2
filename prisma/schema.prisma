@@ -18,6 +18,7 @@ enum Role {
   SUPER_ADMIN
   INSTRUCTOR
   STUDENT
+  SUPPORT // added support role
 }
 
 enum CategoryStatus {
@@ -75,6 +76,8 @@ model User {
   email     String   @unique
   password  String
   role      Role     @default(ADMIN)
+  status    String   @default("ACTIVE") // added for user status
+  lastLogin DateTime? // added for last login timestamp
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
