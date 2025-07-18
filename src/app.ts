@@ -102,6 +102,62 @@ const swaggerDefinition = {
           },
         },
       },
+      AdminUserResponse: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          email: { type: 'string' },
+          role: { type: 'string', enum: ['ADMIN', 'SUPER_ADMIN', 'SUPPORT'] },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'] },
+          lastLogin: { type: 'string', format: 'date-time', nullable: true },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          adminProfile: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              userId: { type: 'string' },
+              adminLevel: { type: 'integer', nullable: true },
+            },
+          },
+        },
+      },
+      AdminUserCreateRequest: {
+        type: 'object',
+        required: ['name', 'email', 'password', 'role'],
+        properties: {
+          name: { type: 'string', example: 'Jane Admin' },
+          email: { type: 'string', example: 'jane.admin@edutech.com' },
+          password: { type: 'string', example: 'securePassword123' },
+          role: { type: 'string', enum: ['ADMIN', 'SUPER_ADMIN', 'SUPPORT'], example: 'ADMIN' },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' },
+        },
+      },
+      AdminUserUpdateRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', example: 'Jane Admin' },
+          email: { type: 'string', example: 'jane.admin@edutech.com' },
+          password: { type: 'string', example: 'securePassword123' },
+          role: { type: 'string', enum: ['ADMIN', 'SUPER_ADMIN', 'SUPPORT'], example: 'ADMIN' },
+          status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' },
+        },
+      },
+      AdminUserCreatedResponse: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Admin user created' },
+          user: { $ref: '#/components/schemas/AdminUserResponse' },
+        },
+      },
+      AdminUserUpdatedResponse: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Admin user updated' },
+          user: { $ref: '#/components/schemas/AdminUserResponse' },
+        },
+      },
     },
   },
   security: [
