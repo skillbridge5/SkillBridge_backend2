@@ -137,7 +137,7 @@ model StudentApplication {
   student          User              @relation(fields: [studentId], references: [id])
   courseId         String
   course           Course            @relation(fields: [courseId], references: [id])
-  paymentMethod    PaymentMethod
+  paymentMethod    String
   paymentReference String
   status           ApplicationStatus @default(PENDING)
   submittedAt      DateTime          @default(now())
