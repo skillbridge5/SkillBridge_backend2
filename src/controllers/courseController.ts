@@ -367,3 +367,42 @@ export const deleteCourse = async (req: Request, res: Response) => {
     res.status(500).json({ error: (error as Error).message });
   }
 }; 
+
+// Public: Get landing page courses (filter by category, sort by popular/newest)
+export const getLandingPageCourses = async (req: Request, res: Response) => {
+  try {
+    const { category, sort } = req.query;
+    const where: any = { status: 'PUBLISHED' };
+    if (category) {
+      // Allow filtering by category id or name
+      where.OR = [
+        { categoryId: category },
+        { category: { name: { equals: category, mode: 'insensitive' } } }
+      ];
+    }
+    let orderBy: any[] = [];
+    if (sort === 'popular') {
+      orderBy = [
+        { students: 'desc' },
+        { rating: 'desc' },
+        { createdAt: 'desc' }
+      ];
+    } else {
+      // Default to newest
+      orderBy = [
+        { createdAt: 'desc' }
+      ];
+    }
+    const courses = await prisma.course.findMany({
+      where,
+      orderBy,
+      include: {
+        category: true,
+        instructor: true
+      }
+    });
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+}; 

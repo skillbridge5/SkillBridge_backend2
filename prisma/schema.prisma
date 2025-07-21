@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,49 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  SUPER_ADMIN
-  INSTRUCTOR
-  STUDENT
-  SUPPORT // added support role
-}
-
-enum CategoryStatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum CourseStatus {
-  DRAFT
-  PUBLISHED
-}
-
-enum CourseLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  ALL_LEVELS
-}
-
-enum ApplicationStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum PaymentMethod {
-  TELEBIRR
-  CBE
-  AMOLE
-  OTHER
-}
-
-enum InstructorStatus {
-  ACTIVE
-  INACTIVE
 }
 
 model Expertise {
@@ -66,56 +17,52 @@ model InstructorExpertise {
   id           String            @id @default(uuid())
   instructorId String
   expertiseId  String
-  instructor   InstructorProfile @relation(fields: [instructorId], references: [id])
   expertise    Expertise         @relation(fields: [expertiseId], references: [id])
+  instructor   InstructorProfile @relation(fields: [instructorId], references: [id])
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(ADMIN)
-  status    String   @default("ACTIVE") // added for user status
-  lastLogin DateTime? // added for last login timestamp
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  studentProfile    StudentProfile?
-  instructorProfile InstructorProfile?
+  id                String             @id @default(uuid())
+  name              String
+  email             String             @unique
+  password          String
+  role              Role               @default(ADMIN)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  lastLogin         DateTime?
+  status            String             @default("ACTIVE")
   adminProfile      AdminProfile?
   coursesTaught     Course[]           @relation("InstructorCourses")
-
+  instructorProfile InstructorProfile?
+  studentProfile    StudentProfile?
   StudentApplication StudentApplication[]
 }
 
 model StudentProfile {
   id     String  @id @default(uuid())
-  user   User    @relation(fields: [userId], references: [id])
   userId String  @unique
   grade  String?
-  // Add more student-specific fields here
+  user   User    @relation(fields: [userId], references: [id])
 }
 
 model InstructorProfile {
   id                  String                @id @default(uuid())
-  user                User                  @relation(fields: [userId], references: [id])
   userId              String                @unique
-  phone               String?
-  yearsOfExperience   Int?
   bio                 String?
+  phone               String?
+  rating              Float?
   status              InstructorStatus      @default(ACTIVE)
-  rating              Float? // average rating
-  students            Int? // total students
-  instructorExpertise InstructorExpertise[] // relation to expertise
+  students            Int?
+  yearsOfExperience   Int?
+  instructorExpertise InstructorExpertise[]
+  user                User                  @relation(fields: [userId], references: [id])
 }
 
 model AdminProfile {
   id         String @id @default(uuid())
-  user       User   @relation(fields: [userId], references: [id])
   userId     String @unique
   adminLevel Int?
-  // Add more admin-specific fields here
+  user       User   @relation(fields: [userId], references: [id])
 }
 
 model Category {
@@ -140,49 +87,48 @@ model Course {
   level               CourseLevel
   duration            String
   categoryId          String
-  category            Category          @relation(fields: [categoryId], references: [id])
   instructorId        String
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  category            Category          @relation(fields: [categoryId], references: [id])
   instructor          User              @relation("InstructorCourses", fields: [instructorId], references: [id])
   modules             CourseModule[]
   learningOutcomes    LearningOutcome[]
   prerequisites       Prerequisite[]
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-
-  StudentApplication StudentApplication[]
+  StudentApplication  StudentApplication[]
 }
 
 model CourseModule {
   id       String         @id @default(uuid())
   courseId String
-  course   Course         @relation(fields: [courseId], references: [id])
   title    String
   duration String
   order    Int
   lessons  CourseLesson[]
+  course   Course         @relation(fields: [courseId], references: [id])
 }
 
 model CourseLesson {
   id       String       @id @default(uuid())
   moduleId String
-  module   CourseModule @relation(fields: [moduleId], references: [id])
   title    String
   duration String
   order    Int
+  module   CourseModule @relation(fields: [moduleId], references: [id])
 }
 
 model LearningOutcome {
   id       String @id @default(uuid())
   courseId String
-  course   Course @relation(fields: [courseId], references: [id])
   text     String
+  course   Course @relation(fields: [courseId], references: [id])
 }
 
 model Prerequisite {
   id       String @id @default(uuid())
   courseId String
-  course   Course @relation(fields: [courseId], references: [id])
   text     String
+  course   Course @relation(fields: [courseId], references: [id])
 }
 
 model StudentApplication {
@@ -204,17 +150,62 @@ model StudentApplication {
   fullName       String
   dateOfBirth    DateTime
   gender         String
+  nationality    String? // newly added
   university     String?
   email          String
   phone          String
   telegramHandle String?
-  address        String
+  address        String? // now optional
 
   // Receipt handling
   receiptUrl      String?
   receiptVerified Boolean @default(false)
 
+  paymentOption   String? // newly added
+
   @@index([studentId])
   @@index([courseId])
-  @@index([status])
+}
+
+enum Role {
+  ADMIN
+  SUPER_ADMIN
+  INSTRUCTOR
+  STUDENT
+  SUPPORT
+}
+
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum InstructorStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PaymentMethod {
+  TELEBIRR
+  CBE
+  AMOLE
+  OTHER
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

@@ -1,6 +1,8 @@
+
+
 import { Request, Response } from 'express';
 import prisma from '../config/prisma';
-import { ApplicationStatus } from '@prisma/client';
+// import { ApplicationStatus } from '@prisma/client'; // Commented out because it does not exist
 import path from 'path';
 import { existsSync } from 'fs';
 import { getReceiptPath } from '../utils/fileUpload';
@@ -12,7 +14,7 @@ export const getAllApplications = async (req: Request, res: Response) => {
 
     const applications = await prisma.studentApplication.findMany({
       where: {
-        status: status as ApplicationStatus,
+        status: status as any, // Use 'any' if ApplicationStatus enum is not available
         courseId: courseId as string,
         OR: search ? [
           { fullName: { contains: search as string, mode: 'insensitive' } },
@@ -164,5 +166,6 @@ export const downloadApplicationReceipt = async (req: Request, res: Response) =>
     res.status(500).json({ error: (error as Error).message });
   }
 };
+
 
 
