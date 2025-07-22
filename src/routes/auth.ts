@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { register, login, logout } from '../controllers/authController';
+import { register, login, logout, refreshToken } from '../controllers/authController';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -140,5 +140,40 @@ router.post('/login', login);
  *                   example: Logout successful
  */
 router.post('/logout', authenticateJWT, logout);
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token using refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: <refresh_token>
+ *     responses:
+ *       200:
+ *         description: New access token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *       400:
+ *         description: Refresh token is required
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+router.post('/refresh', refreshToken);
 
 export default router; 

@@ -62,18 +62,19 @@ export const getApplicationById = async (req: Request, res: Response) => {
 
 export const createApplication = async (req: Request, res: Response) => {
   try {
-    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
-
+    // Remove authentication check for public endpoint
     const input: ApplicationCreateInput = req.body;
 
     const course = await prisma.course.findUnique({ where: { id: input.courseId } });
     if (!course) return res.status(404).json({ error: 'Course not found' });
 
+    const data: any = { ...input };
+    if (req.user) {
+      data.studentId = req.user.id;
+    }
+
     const application = await prisma.studentApplication.create({
-      data: {
-        studentId: req.user.id,
-        ...input
-      }
+      data
     });
 
     res.status(201).json(application);

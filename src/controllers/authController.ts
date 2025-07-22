@@ -110,4 +110,25 @@ export const login = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
   // Logout logic will go here
   res.json({ message: 'Logout endpoint' });
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'Refresh token is required' });
+    }
+    const secret = process.env.JWT_SECRET as string;
+    let payload;
+    try {
+      payload = jwt.verify(refreshToken, secret) as jwt.JwtPayload;
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+    // Issue new access token
+    const newAccessToken = jwt.sign({ id: payload.id, email: payload.email, role: payload.role }, secret, { expiresIn: '10h' });
+    return res.status(200).json({ accessToken: newAccessToken });
+  } catch (error) {
+    return res.status(500).json({ error: (error as Error).message });
+  }
 }; 

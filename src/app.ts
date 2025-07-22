@@ -156,6 +156,50 @@ const swaggerDefinition = {
           status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' },
         },
       },
+      ApplicationCreateInput: {
+        type: 'object',
+        required: [
+          'courseId',
+          'paymentMethod',
+          'paymentReference',
+          'fullName',
+          'dateOfBirth',
+          'gender',
+          'email',
+          'phone',
+          'address'
+        ],
+        properties: {
+          courseId: { type: 'string', format: 'uuid', example: 'b3b7c8e2-1d2f-4c3a-9e2b-123456789abc' },
+          paymentMethod: { type: 'string', example: 'bank_transfer' },
+          paymentReference: { type: 'string', example: 'TRX123456' },
+          marketingSource: { type: 'string', example: 'Instagram', nullable: true },
+          fullName: { type: 'string', example: 'Alice Johnson' },
+          dateOfBirth: { type: 'string', format: 'date-time', example: '2000-01-15T00:00:00.000Z' },
+          gender: { type: 'string', example: 'Female' },
+          university: { type: 'string', example: 'Harvard University', nullable: true },
+          email: { type: 'string', format: 'email', example: 'alice.johnson@example.com' },
+          phone: { type: 'string', example: '+1234567890' },
+          telegramHandle: { type: 'string', example: '@alicejohnson', nullable: true },
+          address: { type: 'string', example: '123 Main St, Springfield' },
+          paymentOption: { type: 'string', example: 'installment', nullable: true },
+        },
+        example: {
+          courseId: 'b3b7c8e2-1d2f-4c3a-9e2b-123456789abc',
+          paymentMethod: 'bank_transfer',
+          paymentReference: 'TRX123456',
+          marketingSource: 'Instagram',
+          fullName: 'Alice Johnson',
+          dateOfBirth: '2000-01-15T00:00:00.000Z',
+          gender: 'Female',
+          university: 'Harvard University',
+          email: 'alice.johnson@example.com',
+          phone: '+1234567890',
+          telegramHandle: '@alicejohnson',
+          address: '123 Main St, Springfield',
+          paymentOption: 'installment'
+        }
+      },
       AdminUserCreatedResponse: {
         type: 'object',
         properties: {
