@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { register, login, logout, refreshToken } from '../controllers/authController';
+import { register, login, logout, refreshToken, registerStudent, loginStudent } from '../controllers/authController';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 
 const router = Router();
@@ -175,5 +175,73 @@ router.post('/logout', authenticateJWT, logout);
  *         description: Invalid or expired refresh token
  */
 router.post('/refresh', refreshToken);
+
+/**
+ * @swagger
+ * /api/auth/register-student:
+ *   post:
+ *     summary: Register a new student user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Student User
+ *               email:
+ *                 type: string
+ *                 example: student@example.com
+ *               password:
+ *                 type: string
+ *                 example: yourpassword
+ *     responses:
+ *       201:
+ *         description: Student registered
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: User already exists
+ */
+router.post('/register-student', registerStudent);
+
+/**
+ * @swagger
+ * /api/auth/login-student:
+ *   post:
+ *     summary: Login a student user and get tokens
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: student@example.com
+ *               password:
+ *                 type: string
+ *                 example: yourpassword
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Invalid credentials
+ */
+router.post('/login-student', loginStudent);
 
 export default router; 

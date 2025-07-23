@@ -3,8 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
+import prisma from '../config/prisma';
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -130,5 +129,152 @@ export const refreshToken = async (req: Request, res: Response) => {
     return res.status(200).json({ accessToken: newAccessToken });
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+/**
+ * @swagger
+ * /api/auth/register-student:
+ *   post:
+ *     summary: Register a new student user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Student User
+ *               email:
+ *                 type: string
+ *                 example: student@example.com
+ *               password:
+ *                 type: string
+ *                 example: yourpassword
+ *     responses:
+ *       201:
+ *         description: Student registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: User already exists
+ */
+// Student Registration
+export const registerStudent = async (req: Request, res: Response) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'User already exists' });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: 'STUDENT',
+        studentProfile: { create: {} }
+      }
+    });
+    const studentProfile = await prisma.studentProfile.findUnique({ where: { userId: user.id } });
+    res.status(201).json({ message: 'Student registered', user: { ...user, studentProfile } });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+/**
+ * @swagger
+ * /api/auth/login-student:
+ *   post:
+ *     summary: Login a student user and get tokens
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: student@example.com
+ *               password:
+ *                 type: string
+ *                 example: yourpassword
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Invalid credentials
+ */
+// Student Login
+export const loginStudent = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || user.role !== 'STUDENT') {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    const payload = { id: user.id, email: user.email, role: user.role };
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '10h' });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: '7d' });
+    const studentProfileLogin = await prisma.studentProfile.findUnique({ where: { userId: user.id } });
+    res.status(200).json({
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        studentProfile: studentProfileLogin
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
   }
 }; 
