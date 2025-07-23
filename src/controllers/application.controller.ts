@@ -5,7 +5,6 @@ import prisma from '../config/prisma';
 // import { ApplicationStatus } from '@prisma/client'; // Commented out because it does not exist
 import path from 'path';
 import { existsSync } from 'fs';
-import { getReceiptPath } from '../utils/fileUpload';
 import { ApplicationCreateInput, ApplicationUpdateInput } from '../middlewares/validators/applicationValidation';
 
 export const getAllApplications = async (req: Request, res: Response) => {
@@ -126,18 +125,28 @@ export const getUserApplications = async (req: Request, res: Response) => {
 export const uploadApplicationReceipt = async (req: Request, res: Response) => {
   try {
     if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
-    if (!req.file || !('path' in req.file)) return res.status(400).json({ error: 'No file uploaded' });
+    if (!req.file || !(req.file as any).location) return res.status(400).json({ error: 'No file uploaded' });
 
     const { id } = req.params;
+    const fileUrl = (req.file as any).location;
 
-    const cloudinaryUrl = (req.file as any).path;
+    // Find the application first
+    const application = await prisma.studentApplication.findUnique({ where: { id } });
+    if (!application) return res.status(404).json({ error: 'Application not found' });
 
-    const application = await prisma.studentApplication.update({
-      where: { id, studentId: req.user.id },
-      data: { receiptUrl: cloudinaryUrl }
+    // Only allow students to upload for their own application, admins/instructors for any
+    if (
+      req.user.role === 'STUDENT' && application.studentId !== req.user.id
+    ) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const updated = await prisma.studentApplication.update({
+      where: { id },
+      data: { receiptUrl: fileUrl }
     });
 
-    res.json(application);
+    res.json(updated);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }

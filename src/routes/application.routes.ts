@@ -17,7 +17,7 @@ import {
   uploadApplicationReceipt,
   downloadApplicationReceipt
 } from '../controllers/application.controller';
-import { uploadReceipt } from '../utils/fileUpload';
+import { upload } from '../utils/fileUpload';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 import { authorizeRoles } from '../middlewares/authorizeRoles';
 import { validateRequest } from '../middlewares/validateRequest';
@@ -202,7 +202,7 @@ router.post(
   '/:id/receipt',
   authenticateJWT,
   authorizeRoles('STUDENT'),
-  uploadReceipt,
+  upload.single('receipt'),
   uploadApplicationReceipt
 );
 

@@ -1,33 +1,31 @@
-import multer from 'multer';
-import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import { Request } from 'express';
-import { mkdirSync, existsSync } from 'fs';
+import { S3Client } from "@aws-sdk/client-s3";
+import multer from "multer";
+import multerS3 from "multer-s3";
+import { v4 as uuidv4 } from "uuid";
+import path from "path";
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../../uploads/receipts');
-if (!existsSync(uploadDir)) {
-  mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (req: Request, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `receipt_${uuidv4()}${ext}`);
-  }
+const s3 = new S3Client({
+  region: process.env.B2_REGION,
+  endpoint: process.env.B2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.B2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.B2_SECRET_ACCESS_KEY!,
+  },
+  forcePathStyle: true,
 });
 
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-  allowedTypes.includes(file.mimetype) ? cb(null, true) : cb(new Error('Invalid file type'));
-};
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+export const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.B2_BUCKET_NAME!,
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    acl: "public-read",
+    metadata: function (req, file, cb) {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: function (req, file, cb) {
+      cb(null, `${uuidv4()}${path.extname(file.originalname)}`);
+    },
+  }),
+  limits: { fileSize: 1024 * 1024 * 1024, fieldSize: 1024 * 1024 * 1024 },
 });
-
-export const uploadReceipt = upload.single('receipt');
-export const getReceiptPath = (filename: string) => path.join(uploadDir, filename);
