@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 import {
-  getAllCourses, getCourseById, createCourseWithDetails, updateCourseWithDetails, deleteCourse, getLandingPageCourses
+  getAllCourses, getCourseById, createCourseWithDetails, updateCourseWithDetails, deleteCourse, getLandingPageCourses, getLandingCoursesPublic
 } from '../controllers/courseController';
 
 const router = Router();
@@ -135,6 +135,83 @@ router.get('/', authenticateJWT, getAllCourses);
 
 /**
  * @swagger
+ * /api/courses/landing:
+ *   get:
+ *     summary: Get public landing page courses
+ *     description: >-
+ *       Returns a list of published courses for the landing page. Supports filtering by category (id or name) and sorting by most popular or newest.
+ *     tags: [Courses]
+ *     security: []
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Category ID or name to filter courses
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [popular, newest]
+ *         required: false
+ *         description: Sort by 'popular' (students, rating) or 'newest' (createdAt)
+ *     responses:
+ *       200:
+ *         description: List of published courses for the landing page
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   shortDescription:
+ *                     type: string
+ *                   imageUrl:
+ *                     type: string
+ *                   priceOriginal:
+ *                     type: number
+ *                   priceDiscounted:
+ *                     type: number
+ *                   category:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                   instructor:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       instructorProfile:
+ *                         type: object
+ *                         properties:
+ *                           rating:
+ *                             type: number
+ *                           students:
+ *                             type: number
+ *       500:
+ *         description: Server error
+ */
+router.get('/landing', (req, res, next) => {
+  console.log('Landing route hit');
+  next();
+}, getLandingPageCourses);
+
+
+/**
+ * @swagger
  * /api/courses/{id}:
  *   get:
  *     summary: Get a course by ID with complete details
@@ -258,7 +335,10 @@ router.get('/', authenticateJWT, getAllCourses);
  *       404:
  *         description: Course not found
  */
-router.get('/:id', authenticateJWT, getCourseById);
+router.get('/:id', (req, res, next) => {
+  console.log('Dynamic :id route hit, id:', req.params.id);
+  next();
+}, authenticateJWT, getCourseById);
 
 /**
  * @swagger
@@ -682,73 +762,10 @@ router.put('/:id/comprehensive', authenticateJWT, updateCourseWithDetails);
  */
 router.delete('/:id', authenticateJWT, deleteCourse);
 
-/**
- * @swagger
- * /api/courses/landing:
- *   get:
- *     summary: Get public landing page courses
- *     description: >-
- *       Returns a list of published courses for the landing page. Supports filtering by category (id or name) and sorting by most popular or newest.
- *     tags: [Courses]
- *     parameters:
- *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *         required: false
- *         description: Category ID or name to filter courses
- *       - in: query
- *         name: sort
- *         schema:
- *           type: string
- *           enum: [popular, newest]
- *         required: false
- *         description: Sort by 'popular' (students, rating) or 'newest' (createdAt)
- *     responses:
- *       200:
- *         description: List of published courses for the landing page
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   title:
- *                     type: string
- *                   shortDescription:
- *                     type: string
- *                   imageUrl:
- *                     type: string
- *                   priceOriginal:
- *                     type: number
- *                   priceDiscounted:
- *                     type: number
- *                   rating:
- *                     type: number
- *                   students:
- *                     type: number
- *                   category:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       name:
- *                         type: string
- *                   instructor:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       name:
- *                         type: string
- *                       email:
- *                         type: string
- *       500:
- *         description: Server error
- */
-router.get('/landing', getLandingPageCourses);
+// Catch-all logger for unmatched requests in the course router
+router.use((req, res, next) => {
+  console.log('Course router catch-all:', req.method, req.originalUrl);
+  next();
+});
 
 export default router; 

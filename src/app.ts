@@ -12,12 +12,14 @@ import applicationRoutes from './routes/application.routes';
 import path from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { errorHandler } from './middlewares/errorHandler';
+import { getLandingCoursesPublic } from './controllers/courseController';
 
 const app = express();
 
-
 app.use(cors());
 app.use(express.json());
+
+// Mount route modules
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/courses', courseRoutes);
@@ -30,6 +32,14 @@ if (!existsSync(uploadsDir)) {
 
 app.use('/api/instructors', instructorRoutes);
 app.use('/api/admins', adminRoutes);
+
+// Register the new public landing courses endpoint directly
+app.get('/api/landing/courses', getLandingCoursesPublic);
+
+// Add a test route to verify app is working
+app.get('/api/test-route', (req, res) => {
+  res.send('Test route works!');
+});
 
 const swaggerDefinition = {
   openapi: '3.0.0',
@@ -236,5 +246,4 @@ app.get('/health', (req, res) => {
 
 app.use(errorHandler);
 
-
-export default app; 
+export default app;
