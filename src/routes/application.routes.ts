@@ -128,6 +128,8 @@ router.get('/:id', authenticateJWT, getApplicationById);
  */
 router.post(
   '/',
+  authenticateJWT,
+  authorizeRoles('STUDENT'),
   validateRequest(applicationCreateSchema),
   createApplication
 );

@@ -204,10 +204,7 @@ router.get('/', authenticateJWT, getAllCourses);
  *       500:
  *         description: Server error
  */
-router.get('/landing', (req, res, next) => {
-  console.log('Landing route hit');
-  next();
-}, getLandingPageCourses);
+router.get('/landing', getLandingPageCourses);
 
 
 /**
@@ -335,10 +332,7 @@ router.get('/landing', (req, res, next) => {
  *       404:
  *         description: Course not found
  */
-router.get('/:id', (req, res, next) => {
-  console.log('Dynamic :id route hit, id:', req.params.id);
-  next();
-}, authenticateJWT, getCourseById);
+router.get('/:id', authenticateJWT, getCourseById);
 
 /**
  * @swagger

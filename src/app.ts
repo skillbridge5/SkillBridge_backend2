@@ -38,11 +38,6 @@ app.use('/api/admins', adminRoutes);
 // Register the new public landing courses endpoint directly
 app.get('/api/landing/courses', getLandingCoursesPublic);
 
-// Add a test route to verify app is working
-app.get('/api/test-route', (req, res) => {
-  res.send('Test route works!');
-});
-
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
