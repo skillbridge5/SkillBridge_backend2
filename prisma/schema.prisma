@@ -167,6 +167,16 @@ model StudentApplication {
   @@index([courseId])
 }
 
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String
+  message   String
+  status    String   @default("new") // new, read, replied
+  createdAt DateTime @default(now())
+}
+
 enum Role {
   ADMIN
   SUPER_ADMIN

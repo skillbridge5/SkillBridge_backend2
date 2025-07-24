@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
+import prisma from '../config/prisma';
+import { Parser } from 'json2csv';
 
 const adminRoles = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT'];
 

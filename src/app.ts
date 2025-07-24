@@ -13,6 +13,7 @@ import path from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { errorHandler } from './middlewares/errorHandler';
 import { getLandingCoursesPublic } from './controllers/courseController';
+import contactRoutes from './routes/contact';
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/contact', contactRoutes);
 
 const uploadsDir = path.join(__dirname, 'uploads/receipts');
 if (!existsSync(uploadsDir)) {
