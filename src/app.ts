@@ -207,6 +207,61 @@ const swaggerDefinition = {
           paymentOption: 'installment'
         }
       },
+      StudentApplication: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'app-12345678-1234-1234-1234-123456789abc' },
+          studentId: { type: 'string', example: 'user-12345678-1234-1234-1234-123456789abc' },
+          courseId: { type: 'string', example: 'course-12345678-1234-1234-1234-123456789abc' },
+          paymentMethod: { type: 'string', example: 'TELEBIRR' },
+          paymentReference: { type: 'string', example: 'TXN123456789' },
+          status: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED'], example: 'PENDING' },
+          submittedAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00.000Z' },
+          reviewedAt: { type: 'string', format: 'date-time', nullable: true },
+          reviewedBy: { type: 'string', nullable: true },
+          adminNotes: { type: 'string', nullable: true },
+          marketingSource: { type: 'string', example: 'social_media', nullable: true },
+          fullName: { type: 'string', example: 'John Doe' },
+          dateOfBirth: { type: 'string', format: 'date-time', example: '1990-01-01T00:00:00.000Z' },
+          gender: { type: 'string', example: 'male' },
+          nationality: { type: 'string', example: 'Ethiopian', nullable: true },
+          university: { type: 'string', example: 'Addis Ababa University', nullable: true },
+          email: { type: 'string', format: 'email', example: 'john.doe@example.com' },
+          phone: { type: 'string', example: '+251912345678' },
+          telegramHandle: { type: 'string', example: '@johndoe', nullable: true },
+          address: { type: 'string', example: 'Addis Ababa, Ethiopia', nullable: true },
+          receiptUrl: { type: 'string', example: 'https://example.com/receipt.jpg', nullable: true },
+          receiptVerified: { type: 'boolean', example: false },
+          paymentOption: { type: 'string', example: 'full', nullable: true },
+          course: {
+            type: 'object',
+            properties: {
+              title: { type: 'string', example: 'Machine Learning with Python' }
+            }
+          },
+          student: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', example: 'John Doe' }
+            }
+          }
+        }
+      },
+      ApplicationWithReceiptResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          message: { type: 'string', example: 'Application submitted successfully with receipt' },
+          application: { $ref: '#/components/schemas/StudentApplication' }
+        }
+      },
+      ApplicationError: {
+        type: 'object',
+        properties: {
+          error: { type: 'string', example: 'Receipt file is required' },
+          details: { type: 'string', example: 'Failed to create application with receipt' }
+        }
+      },
       AdminUserCreatedResponse: {
         type: 'object',
         properties: {

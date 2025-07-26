@@ -178,5 +178,47 @@ export const downloadApplicationReceipt = async (req: Request, res: Response) =>
   }
 };
 
+export const createApplicationWithReceipt = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
+    if (!req.file || !(req.file as any).location) {
+      return res.status(400).json({ error: 'Receipt file is required' });
+    }
+
+    const input: ApplicationCreateInput = req.body;
+    const fileUrl = (req.file as any).location;
+
+    // Validate course exists
+    const course = await prisma.course.findUnique({ where: { id: input.courseId } });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    // Create application with receipt in a single transaction
+    const application = await prisma.studentApplication.create({
+      data: {
+        ...input,
+        studentId: req.user.id,
+        receiptUrl: fileUrl,
+        status: 'PENDING'
+      },
+      include: {
+        course: { select: { title: true } },
+        student: { select: { name: true } }
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Application submitted successfully with receipt',
+      application
+    });
+  } catch (error) {
+    console.error('Application creation error:', error);
+    res.status(400).json({ 
+      error: (error as Error).message,
+      details: 'Failed to create application with receipt'
+    });
+  }
+};
+
 
 

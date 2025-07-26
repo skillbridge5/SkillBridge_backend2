@@ -1,5 +1,3 @@
-// COMMENTED OUT: This route is not built yet and references missing controller exports.
-/*
 /**
  * @swagger
  * tags:
@@ -15,7 +13,8 @@ import {
   updateApplication,
   getUserApplications,
   uploadApplicationReceipt,
-  downloadApplicationReceipt
+  downloadApplicationReceipt,
+  createApplicationWithReceipt
 } from '../controllers/application.controller';
 import { upload } from '../utils/fileUpload';
 import { authenticateJWT } from '../middlewares/authMiddleware';
@@ -132,6 +131,132 @@ router.post(
   authorizeRoles('STUDENT'),
   validateRequest(applicationCreateSchema),
   createApplication
+);
+
+/**
+ * @swagger
+ * /api/applications/with-receipt:
+ *   post:
+ *     summary: Create a new application with receipt upload in a single request
+ *     description: This endpoint allows students to submit their application along with a payment receipt in one atomic transaction. This solves the chicken-and-egg problem where receipt upload previously required an application ID.
+ *     tags: [Applications]
+ *     security:
+ *       - bearerAuth: []
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - courseId
+ *               - paymentMethod
+ *               - paymentReference
+ *               - fullName
+ *               - dateOfBirth
+ *               - gender
+ *               - email
+ *               - phone
+ *               - address
+ *               - receipt
+ *             properties:
+ *               courseId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Course ID to apply for
+ *                 example: "b3b7c8e2-1d2f-4c3a-9e2b-123456789abc"
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [TELEBIRR, CBE, AMOLE, OTHER]
+ *                 description: Payment method used
+ *                 example: "TELEBIRR"
+ *               paymentReference:
+ *                 type: string
+ *                 minLength: 3
+ *                 description: Transaction reference or ID
+ *                 example: "TXN123456789"
+ *               marketingSource:
+ *                 type: string
+ *                 description: How the user heard about the course
+ *                 example: "social_media"
+ *               fullName:
+ *                 type: string
+ *                 minLength: 3
+ *                 description: Student's full name
+ *                 example: "John Doe"
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Student's date of birth
+ *                 example: "1990-01-01T00:00:00.000Z"
+ *               gender:
+ *                 type: string
+ *                 description: Student's gender
+ *                 example: "male"
+ *               nationality:
+ *                 type: string
+ *                 description: Student's nationality
+ *                 example: "Ethiopian"
+ *               university:
+ *                 type: string
+ *                 description: Student's university
+ *                 example: "Addis Ababa University"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Student's email address
+ *                 example: "john.doe@example.com"
+ *               phone:
+ *                 type: string
+ *                 description: Student's phone number
+ *                 example: "+251912345678"
+ *               telegramHandle:
+ *                 type: string
+ *                 description: Student's Telegram handle
+ *                 example: "@johndoe"
+ *               address:
+ *                 type: string
+ *                 description: Student's address
+ *                 example: "Addis Ababa, Ethiopia"
+ *               paymentOption:
+ *                 type: string
+ *                 description: Payment option (full/installment)
+ *                 example: "full"
+ *               receipt:
+ *                 type: string
+ *                 format: binary
+ *                 description: Payment receipt file (image or PDF)
+ *     responses:
+ *       201:
+ *         description: Application created successfully with receipt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApplicationWithReceiptResponse'
+ *       400:
+ *         description: Validation error or missing receipt
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApplicationError'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.post(
+  '/with-receipt',
+  authenticateJWT,
+  authorizeRoles('STUDENT'),
+  upload.single('receipt'),
+  validateRequest(applicationCreateSchema),
+  createApplicationWithReceipt
 );
 
 /**
