@@ -229,6 +229,16 @@ model AdvancedSettings {
   updatedAt         DateTime @updatedAt
 }
 
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
 enum Role {
   ADMIN
   SUPER_ADMIN
@@ -270,4 +280,13 @@ enum ApplicationStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum NotificationType {
+  NEW_APPLICATION
+  NEW_STUDENT
+  NEW_COURSE
+  NEW_INSTRUCTOR
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
 }

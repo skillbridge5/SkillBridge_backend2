@@ -7,6 +7,8 @@ import courseRoutes from './routes/course';
 import instructorRoutes from './routes/instructor';
 import adminRoutes from './routes/admin';
 import settingsRoutes from './routes/settings';
+import dashboardRoutes from './routes/dashboard';
+import notificationRoutes from './routes/notifications';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import applicationRoutes from './routes/application.routes';
@@ -28,6 +30,8 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const uploadsDir = path.join(__dirname, 'uploads/receipts');
 if (!existsSync(uploadsDir)) {

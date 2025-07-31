@@ -6,6 +6,7 @@ import prisma from '../config/prisma';
 import path from 'path';
 import { existsSync } from 'fs';
 import { ApplicationCreateInput, ApplicationUpdateInput } from '../middlewares/validators/applicationValidation';
+import { createNotification } from './notificationController';
 
 export const getAllApplications = async (req: Request, res: Response) => {
   try {
@@ -77,6 +78,13 @@ export const createApplication = async (req: Request, res: Response) => {
       data
     });
 
+    // Create notification for new application
+    await createNotification(
+      'NEW_APPLICATION',
+      'New Application Received',
+      `${input.fullName} has submitted an application for ${course.title}`
+    );
+
     res.status(201).json(application);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
@@ -90,6 +98,16 @@ export const updateApplication = async (req: Request, res: Response) => {
     const { id } = req.params;
     const input: ApplicationUpdateInput = req.body;
 
+    // Get the current application to check if status is changing
+    const currentApplication = await prisma.studentApplication.findUnique({
+      where: { id },
+      include: { course: { select: { title: true } } }
+    });
+
+    if (!currentApplication) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
     const application = await prisma.studentApplication.update({
       where: { id },
       data: {
@@ -98,6 +116,18 @@ export const updateApplication = async (req: Request, res: Response) => {
         reviewedBy: input.status ? req.user.id : undefined
       }
     });
+
+    // Create notification for status change
+    if (input.status && input.status !== currentApplication.status) {
+      const notificationType = input.status === 'APPROVED' ? 'APPLICATION_APPROVED' : 'APPLICATION_REJECTED';
+      const notificationTitle = input.status === 'APPROVED' ? 'Application Approved' : 'Application Rejected';
+      
+      await createNotification(
+        notificationType,
+        notificationTitle,
+        `Application for ${currentApplication.course.title} by ${currentApplication.fullName} has been ${input.status.toLowerCase()}`
+      );
+    }
 
     res.json(application);
   } catch (error) {
