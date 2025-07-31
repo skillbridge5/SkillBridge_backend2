@@ -6,6 +6,7 @@ import categoryRoutes from './routes/category';
 import courseRoutes from './routes/course';
 import instructorRoutes from './routes/instructor';
 import adminRoutes from './routes/admin';
+import settingsRoutes from './routes/settings';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import applicationRoutes from './routes/application.routes';
@@ -26,6 +27,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/settings', settingsRoutes);
 
 const uploadsDir = path.join(__dirname, 'uploads/receipts');
 if (!existsSync(uploadsDir)) {
@@ -274,6 +276,30 @@ const swaggerDefinition = {
         properties: {
           message: { type: 'string', example: 'Admin user updated' },
           user: { $ref: '#/components/schemas/AdminUserResponse' },
+        },
+      },
+      PlatformSettings: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'settings-12345678-1234-1234-1234-123456789abc' },
+          siteName: { type: 'string', example: 'SkillBridge' },
+          contactEmail: { type: 'string', format: 'email', example: 'contact@skillbridge.com' },
+          siteDescription: { type: 'string', example: 'Bridging Gaps, Building Skills, Transforming Futures' },
+          contactPhone: { type: 'string', example: '+251 2345 4365' },
+          address: { type: 'string', example: '123 Education Street, Learning City' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      PlatformSettingsUpdateRequest: {
+        type: 'object',
+        required: ['siteName', 'contactEmail', 'siteDescription', 'contactPhone', 'address'],
+        properties: {
+          siteName: { type: 'string', example: 'SkillBridge' },
+          contactEmail: { type: 'string', format: 'email', example: 'contact@skillbridge.com' },
+          siteDescription: { type: 'string', example: 'Bridging Gaps, Building Skills, Transforming Futures' },
+          contactPhone: { type: 'string', example: '+251 2345 4365' },
+          address: { type: 'string', example: '123 Education Street, Learning City' },
         },
       },
     },

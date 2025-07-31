@@ -177,6 +177,17 @@ model ContactMessage {
   createdAt DateTime @default(now())
 }
 
+model PlatformSettings {
+  id          String   @id @default(uuid())
+  siteName    String   @default("SkillBridge")
+  contactEmail String  @default("contact@skillbridge.com")
+  siteDescription String @default("Bridging Gaps, Building Skills, Transforming Futures")
+  contactPhone String  @default("+251 2345 4365")
+  address     String   @default("123 Education Street, Learning City")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum Role {
   ADMIN
   SUPER_ADMIN
