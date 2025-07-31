@@ -188,6 +188,47 @@ model PlatformSettings {
   updatedAt   DateTime @updatedAt
 }
 
+model EmailSettings {
+  id          String   @id @default(uuid())
+  smtpHost    String   @default("smtp.gmail.com")
+  smtpPort    Int      @default(587)
+  smtpUsername String  @default("admin@edutech.com")
+  smtpPassword String  @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SecuritySettings {
+  id                    String   @id @default(uuid())
+  allowUserRegistration Boolean  @default(true)
+  requireEmailVerification Boolean @default(true)
+  enableNotifications   Boolean  @default(true)
+  maintenanceMode      Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model SocialSettings {
+  id          String   @id @default(uuid())
+  facebookUrl String?  @default("https://facebook.com/yourpage")
+  twitterUrl  String?  @default("https://twitter.com/yourhandle")
+  linkedinUrl String?  @default("https://linkedin.com/company/yourcompany")
+  instagramUrl String? @default("https://instagram.com/yourhandle")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AdvancedSettings {
+  id                String   @id @default(uuid())
+  debugMode         Boolean  @default(false)
+  logLevel          String   @default("info")
+  cacheEnabled      Boolean  @default(true)
+  maxUploadSize     Int      @default(5242880) // 5MB in bytes
+  sessionTimeout    Int      @default(3600) // 1 hour in seconds
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
 enum Role {
   ADMIN
   SUPER_ADMIN
