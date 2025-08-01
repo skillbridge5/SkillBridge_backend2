@@ -301,11 +301,11 @@ export const updateCourseWithDetails = async (req: Request, res: Response) => {
         }
       }
 
-      // Return the complete updated course with all related data
+    
       return true; // just return a flag or id
     });
 
-    // After the transaction, fetch the updated course
+
     const updatedCourse = await prisma.course.findUnique({
       where: { id },
       include: {
@@ -370,11 +370,11 @@ export const deleteCourse = async (req: Request, res: Response) => {
   }
 }; 
 
-// Public: Get landing page courses (filter by category, sort by popular/newest)
+
 export const getLandingPageCourses = async (req: Request, res: Response) => {
   try {
     const { category, sort } = req.query;
-    const where: any = { status: 'PUBLISHED' };
+    const where: any = {}; 
     if (category) {
       where.OR = [
         { categoryId: category },
@@ -394,32 +394,15 @@ export const getLandingPageCourses = async (req: Request, res: Response) => {
     const courses = await prisma.course.findMany({
       where,
       orderBy,
-      select: {
-        id: true,
-        title: true,
-        shortDescription: true,
-        imageUrl: true,
-        priceOriginal: true,
-        priceDiscounted: true,
-        category: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        instructor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            instructorProfile: {
-              select: {
-                rating: true,
-                students: true
-              }
-            }
-          }
-        }
+      include: { 
+        category: true, 
+        instructor: true, 
+        modules: { 
+          include: { lessons: true },
+          orderBy: { order: 'asc' }
+        }, 
+        learningOutcomes: true, 
+        prerequisites: true 
       }
     });
     res.json(courses);
@@ -431,34 +414,18 @@ export const getLandingPageCourses = async (req: Request, res: Response) => {
 export const getLandingCoursesPublic = async (req: Request, res: Response) => {
   try {
     const courses = await prisma.course.findMany({
-      where: { status: 'PUBLISHED' },
-      select: {
-        id: true,
-        title: true,
-        shortDescription: true,
-        imageUrl: true,
-        priceOriginal: true,
-        priceDiscounted: true,
-        category: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        instructor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            instructorProfile: {
-              select: {
-                rating: true,
-                students: true
-              }
-            }
-          }
-        }
-      }
+      where: {}, // Get ALL courses, not just published ones
+      include: { 
+        category: true, 
+        instructor: true, 
+        modules: { 
+          include: { lessons: true },
+          orderBy: { order: 'asc' }
+        }, 
+        learningOutcomes: true, 
+        prerequisites: true 
+      },
+      orderBy: { createdAt: 'desc' }
     });
     res.json(courses);
   } catch (error) {

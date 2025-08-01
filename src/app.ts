@@ -306,6 +306,87 @@ const swaggerDefinition = {
           address: { type: 'string', example: '123 Education Street, Learning City' },
         },
       },
+      Course: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'course-12345678-1234-1234-1234-123456789abc' },
+          title: { type: 'string', example: 'Complete Web Development Bootcamp' },
+          shortDescription: { type: 'string', example: 'Learn HTML, CSS, JavaScript, React, Node.js and more' },
+          detailedDescription: { type: 'string', example: 'A comprehensive course covering all aspects of web development' },
+          imageUrl: { type: 'string', example: 'https://example.com/course-image.jpg', nullable: true },
+          priceOriginal: { type: 'number', example: 99.99 },
+          priceDiscounted: { type: 'number', example: 79.99 },
+          status: { type: 'string', enum: ['DRAFT', 'PUBLISHED'], example: 'PUBLISHED' },
+          level: { type: 'string', enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ALL_LEVELS'], example: 'BEGINNER' },
+          duration: { type: 'string', example: '12 weeks' },
+          categoryId: { type: 'string', example: 'category-12345678-1234-1234-1234-123456789abc' },
+          instructorId: { type: 'string', example: 'instructor-12345678-1234-1234-1234-123456789abc' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          category: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'category-12345678-1234-1234-1234-123456789abc' },
+              name: { type: 'string', example: 'Software Engineering' },
+              description: { type: 'string', example: 'Software development and programming courses' },
+              status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' }
+            }
+          },
+          instructor: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'instructor-12345678-1234-1234-1234-123456789abc' },
+              name: { type: 'string', example: 'John Smith' },
+              email: { type: 'string', format: 'email', example: 'john.smith@edutech.com' },
+              role: { type: 'string', example: 'INSTRUCTOR' }
+            }
+          },
+          modules: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'module-12345678-1234-1234-1234-123456789abc' },
+                title: { type: 'string', example: 'Introduction to HTML' },
+                duration: { type: 'string', example: '2 hours' },
+                order: { type: 'integer', example: 1 },
+                lessons: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string', example: 'lesson-12345678-1234-1234-1234-123456789abc' },
+                      title: { type: 'string', example: 'HTML Basics' },
+                      duration: { type: 'string', example: '30 minutes' },
+                      order: { type: 'integer', example: 1 }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          learningOutcomes: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'outcome-12345678-1234-1234-1234-123456789abc' },
+                text: { type: 'string', example: 'Build responsive websites using HTML, CSS, and JavaScript' }
+              }
+            }
+          },
+          prerequisites: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'prerequisite-12345678-1234-1234-1234-123456789abc' },
+                text: { type: 'string', example: 'Basic computer literacy' }
+              }
+            }
+          }
+        }
+      },
     },
   },
   security: [

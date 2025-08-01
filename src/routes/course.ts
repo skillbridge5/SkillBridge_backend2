@@ -137,9 +137,9 @@ router.get('/', authenticateJWT, getAllCourses);
  * @swagger
  * /api/courses/landing:
  *   get:
- *     summary: Get public landing page courses
+ *     summary: Get all courses with complete data for landing page
  *     description: >-
- *       Returns a list of published courses for the landing page. Supports filtering by category (id or name) and sorting by most popular or newest.
+ *       Returns a list of all courses (both published and draft) with complete data including modules, lessons, learning outcomes, and prerequisites. Supports filtering by category (id or name) and sorting by most popular or newest.
  *     tags: [Courses]
  *     security: []
  *     parameters:
@@ -158,49 +158,13 @@ router.get('/', authenticateJWT, getAllCourses);
  *         description: Sort by 'popular' (students, rating) or 'newest' (createdAt)
  *     responses:
  *       200:
- *         description: List of published courses for the landing page
+ *         description: List of all courses with complete data for the landing page
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                   title:
- *                     type: string
- *                   shortDescription:
- *                     type: string
- *                   imageUrl:
- *                     type: string
- *                   priceOriginal:
- *                     type: number
- *                   priceDiscounted:
- *                     type: number
- *                   category:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       name:
- *                         type: string
- *                   instructor:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                       name:
- *                         type: string
- *                       email:
- *                         type: string
- *                       instructorProfile:
- *                         type: object
- *                         properties:
- *                           rating:
- *                             type: number
- *                           students:
- *                             type: number
+ *                 $ref: '#/components/schemas/Course'
  *       500:
  *         description: Server error
  */
