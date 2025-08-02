@@ -107,7 +107,18 @@ export const updateAdmin = async (req: Request, res: Response) => {
 export const deleteAdmin = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.user.delete({ where: { id } });
+    
+    // First delete the admin profile, then the user
+    await prisma.$transaction(async (tx) => {
+      // Delete admin profile first
+      await tx.adminProfile.deleteMany({
+        where: { userId: id }
+      });
+      
+      // Then delete the user
+      await tx.user.delete({ where: { id } });
+    });
+    
     res.json({ message: 'Admin user deleted' });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
