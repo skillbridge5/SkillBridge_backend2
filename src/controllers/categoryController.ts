@@ -55,4 +55,33 @@ export const deleteCategory = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
+};
+
+export const getNavbarCategories = async (req: Request, res: Response) => {
+  try {
+    const categories = await prisma.category.findMany({
+      where: {
+        status: 'ACTIVE'
+      },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            courses: true
+          }
+        }
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    res.json({
+      categories,
+      total: categories.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
 }; 

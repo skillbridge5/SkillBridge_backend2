@@ -1,8 +1,46 @@
 import { Router } from 'express';
 import { authenticateJWT } from '../middlewares/authMiddleware';
-import { getAllCategories, getCategoryById, createCategory, updateCategory, deleteCategory } from '../controllers/categoryController';
+import { getAllCategories, getCategoryById, createCategory, updateCategory, deleteCategory, getNavbarCategories } from '../controllers/categoryController';
 
 const router = Router();
+
+/**
+ * @swagger
+ * /api/categories/navbar:
+ *   get:
+ *     summary: Get categories for navigation bar
+ *     tags: [Categories]
+ *     description: Returns only active categories with minimal data for navbar display. Used for filtering courses on landing page.
+ *     responses:
+ *       200:
+ *         description: List of active categories for navbar
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 categories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Category ID to be used as filter parameter in landing course API
+ *                       name:
+ *                         type: string
+ *                         description: Category name for display
+ *                       _count:
+ *                         type: object
+ *                         properties:
+ *                           courses:
+ *                             type: integer
+ *                             description: Number of courses in this category
+ *                 total:
+ *                   type: integer
+ *                   description: Total number of active categories
+ */
+router.get('/navbar', getNavbarCategories);
 
 /**
  * @swagger
