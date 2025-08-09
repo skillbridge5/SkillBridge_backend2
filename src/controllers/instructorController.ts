@@ -57,11 +57,12 @@ export const getInstructorById = async (req: Request, res: Response) => {
 export const createInstructor = async (req: Request, res: Response) => {
   try {
     const { name, email, phone, yearsOfExperience, bio, status, rating, students, expertise } = req.body;
+    const normalizedEmail = (email ?? '').trim().toLowerCase();
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
     }
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return res.status(409).json({ error: 'User with this email already exists' });
     }
@@ -70,7 +71,7 @@ export const createInstructor = async (req: Request, res: Response) => {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         password: defaultPassword,
         role: 'INSTRUCTOR',
       },

@@ -54,7 +54,8 @@ export const createAdmin = async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.issues });
     }
     const { name, email, password, role, status } = parsed.data;
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return res.status(409).json({ error: 'User already exists' });
     }
@@ -62,7 +63,7 @@ export const createAdmin = async (req: Request, res: Response) => {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         role,
         status: status || 'ACTIVE',

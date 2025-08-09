@@ -56,7 +56,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticateJWT,
-  authorizeRoles('ADMIN', 'INSTRUCTOR'),
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'INSTRUCTOR'),
   getAllApplications
 );
 
@@ -288,7 +288,7 @@ router.post(
 router.patch(
   '/:id',
   authenticateJWT,
-  authorizeRoles('ADMIN', 'INSTRUCTOR'),
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'INSTRUCTOR'),
   validateRequest(applicationUpdateSchema),
   updateApplication
 );
