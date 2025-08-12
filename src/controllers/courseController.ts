@@ -75,6 +75,19 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
       curriculum = [] // This will be converted to modules and lessons
     } = req.body;
 
+    // Enhanced validation
+    console.log('📝 Course creation request:', {
+      title,
+      shortDescription: shortDescription?.substring(0, 50) + '...',
+      level,
+      duration,
+      categoryId,
+      instructorId,
+      learningOutcomesCount: learningOutcomes?.length || 0,
+      prerequisitesCount: prerequisites?.length || 0,
+      curriculumCount: curriculum?.length || 0
+    });
+
     // Validate required fields
     if (!title || !shortDescription || !detailedDescription || !priceOriginal || !priceDiscounted || !level || !duration || !categoryId || !instructorId) {
       return res.status(400).json({ 
@@ -82,8 +95,49 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
       });
     }
 
+    // Validate level enum
+    const validLevels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ALL_LEVELS'];
+    if (!validLevels.includes(level)) {
+      return res.status(400).json({
+        error: `Invalid level. Must be one of: ${validLevels.join(', ')}`
+      });
+    }
+
+    // Validate status enum
+    const validStatuses = ['DRAFT', 'PUBLISHED'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    // Validate curriculum structure
+    if (curriculum && Array.isArray(curriculum)) {
+      for (let i = 0; i < curriculum.length; i++) {
+        const module = curriculum[i];
+        if (!module.title || !module.duration) {
+          return res.status(400).json({
+            error: `Module ${i + 1} is missing required fields: title and duration`
+          });
+        }
+        
+        if (module.lessons && Array.isArray(module.lessons)) {
+          for (let j = 0; j < module.lessons.length; j++) {
+            const lesson = module.lessons[j];
+            if (!lesson.title) {
+              return res.status(400).json({
+                error: `Lesson ${j + 1} in module ${i + 1} is missing title`
+              });
+            }
+          }
+        }
+      }
+    }
+
     // Use transaction to ensure all data is created atomically
     const createdCourse = await prisma.$transaction(async (tx) => {
+      console.log('🔄 Starting database transaction...');
+      
       // Create the main course
       const course = await tx.course.create({
         data: {
@@ -93,58 +147,84 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
           imageUrl,
           priceOriginal: parseFloat(priceOriginal),
           priceDiscounted: parseFloat(priceDiscounted),
-          status: status as any,
-          level: level as any,
+          status: status as 'DRAFT' | 'PUBLISHED',
+          level: level as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ALL_LEVELS',
           duration,
           categoryId,
           instructorId,
         },
       });
+      
+      console.log('✅ Course created with ID:', course.id);
 
       // Create learning outcomes
-      if (learningOutcomes.length > 0) {
-        await tx.learningOutcome.createMany({
-          data: learningOutcomes.map((outcome: string) => ({
-            courseId: course.id,
-            text: outcome
-          }))
-        });
+      if (learningOutcomes && learningOutcomes.length > 0) {
+        console.log('📚 Creating learning outcomes:', learningOutcomes.length);
+        const outcomesData = learningOutcomes.map((outcome: unknown) => ({
+          courseId: course.id,
+          text: String(outcome).trim()
+        })).filter((outcome: any) => outcome.text.length > 0);
+        
+        if (outcomesData.length > 0) {
+          await tx.learningOutcome.createMany({
+            data: outcomesData
+          });
+          console.log('✅ Learning outcomes created:', outcomesData.length);
+        }
       }
 
       // Create prerequisites
-      if (prerequisites.length > 0) {
-        await tx.prerequisite.createMany({
-          data: prerequisites.map((prereq: string) => ({
-            courseId: course.id,
-            text: prereq
-          }))
-        });
+      if (prerequisites && prerequisites.length > 0) {
+        console.log('📋 Creating prerequisites:', prerequisites.length);
+        const prereqData = prerequisites.map((prereq: unknown) => ({
+          courseId: course.id,
+          text: String(prereq).trim()
+        })).filter((prereq: any) => prereq.text.length > 0);
+        
+        if (prereqData.length > 0) {
+          await tx.prerequisite.createMany({
+            data: prereqData
+          });
+          console.log('✅ Prerequisites created:', prereqData.length);
+        }
       }
 
       // Create modules and lessons from curriculum
-      if (curriculum.length > 0) {
+      if (curriculum && curriculum.length > 0) {
+        console.log('📖 Creating curriculum with modules:', curriculum.length);
+        
         for (let moduleIndex = 0; moduleIndex < curriculum.length; moduleIndex++) {
           const moduleData = curriculum[moduleIndex];
+          console.log(`📚 Creating module ${moduleIndex + 1}:`, moduleData.title);
           
           const module = await tx.courseModule.create({
             data: {
               courseId: course.id,
-              title: moduleData.title,
-              duration: moduleData.duration,
+              title: moduleData.title.trim(),
+              duration: moduleData.duration.trim(),
               order: moduleIndex + 1
             }
           });
+          
+          console.log(`✅ Module created with ID:`, module.id);
 
           // Create lessons for this module
-          if (moduleData.lessons && moduleData.lessons.length > 0) {
-            await tx.courseLesson.createMany({
-              data: moduleData.lessons.map((lesson: any, lessonIndex: number) => ({
-                moduleId: module.id,
-                title: lesson.title,
-                duration: lesson.duration || '30 min',
-                order: lessonIndex + 1
-              }))
-            });
+          if (moduleData.lessons && Array.isArray(moduleData.lessons) && moduleData.lessons.length > 0) {
+            console.log(`📝 Creating ${moduleData.lessons.length} lessons for module:`, moduleData.title);
+            
+            const lessonsData = moduleData.lessons.map((lesson: unknown, lessonIndex: number) => ({
+              moduleId: module.id,
+              title: String((lesson as any).title).trim(),
+              duration: (lesson as any).duration ? String((lesson as any).duration).trim() : '30 min',
+              order: lessonIndex + 1
+            })).filter((lesson: any) => lesson.title.length > 0);
+            
+            if (lessonsData.length > 0) {
+              await tx.courseLesson.createMany({
+                data: lessonsData
+              });
+              console.log(`✅ ${lessonsData.length} lessons created for module:`, moduleData.title);
+            }
           }
         }
       }
@@ -154,6 +234,7 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
     });
 
     // Fetch the complete course with all related data OUTSIDE the transaction
+    console.log('🔄 Fetching complete course data...');
     const result = await prisma.course.findUnique({
       where: { id: createdCourse },
       include: {
@@ -168,9 +249,41 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
       }
     });
 
+    if (!result) {
+      console.error('❌ Failed to fetch created course');
+      return res.status(500).json({ error: 'Course created but failed to fetch complete data' });
+    }
+
+    console.log('🎉 Course created successfully with all details!');
+    console.log('📊 Summary:', {
+      courseId: result.id,
+      title: result.title,
+      modulesCount: result.modules.length,
+      totalLessons: result.modules.reduce((acc: number, mod: any) => acc + mod.lessons.length, 0),
+      learningOutcomesCount: result.learningOutcomes.length,
+      prerequisitesCount: result.prerequisites.length
+    });
+
     res.status(201).json(result);
   } catch (error) {
-    console.error('Error creating course with details:', error);
+    console.error('❌ Error creating course with details:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('Foreign key constraint failed')) {
+        return res.status(400).json({ 
+          error: 'Invalid category or instructor ID. Please check that both exist in the system.',
+          details: error.message 
+        });
+      }
+      if (error.message.includes('Unique constraint failed')) {
+        return res.status(400).json({ 
+          error: 'A course with this title already exists. Please choose a different title.',
+          details: error.message 
+        });
+      }
+    }
+    
     res.status(500).json({ 
       error: 'Failed to create course with details',
       details: (error as Error).message 
@@ -430,5 +543,80 @@ export const getLandingCoursesPublic = async (req: Request, res: Response) => {
     res.json(courses);
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
+  }
+}; 
+
+// Test endpoint to validate course data structure
+export const testCourseData = async (req: Request, res: Response) => {
+  try {
+    const { curriculum, learningOutcomes, prerequisites } = req.body;
+    
+    console.log('🧪 Testing course data structure...');
+    console.log('📚 Curriculum:', JSON.stringify(curriculum, null, 2));
+    console.log('📖 Learning Outcomes:', JSON.stringify(learningOutcomes, null, 2));
+    console.log('📋 Prerequisites:', JSON.stringify(prerequisites, null, 2));
+    
+    // Validate curriculum structure
+    if (curriculum && Array.isArray(curriculum)) {
+      console.log('✅ Curriculum is an array with', curriculum.length, 'modules');
+      
+      for (let i = 0; i < curriculum.length; i++) {
+        const module = curriculum[i];
+        console.log(`📚 Module ${i + 1}:`, {
+          title: module.title,
+          duration: module.duration,
+          lessonsCount: module.lessons?.length || 0
+        });
+        
+        if (module.lessons && Array.isArray(module.lessons)) {
+          for (let j = 0; j < module.lessons.length; j++) {
+            const lesson = module.lessons[j];
+            console.log(`  📝 Lesson ${j + 1}:`, {
+              title: lesson.title,
+              duration: lesson.duration
+            });
+          }
+        }
+      }
+    } else {
+      console.log('❌ Curriculum is not a valid array');
+    }
+    
+    // Validate learning outcomes
+    if (learningOutcomes && Array.isArray(learningOutcomes)) {
+      console.log('✅ Learning outcomes is an array with', learningOutcomes.length, 'items');
+      learningOutcomes.forEach((outcome: any, index: number) => {
+        console.log(`  📖 Outcome ${index + 1}:`, outcome);
+      });
+    } else {
+      console.log('❌ Learning outcomes is not a valid array');
+    }
+    
+    // Validate prerequisites
+    if (prerequisites && Array.isArray(prerequisites)) {
+      console.log('✅ Prerequisites is an array with', prerequisites.length, 'items');
+      prerequisites.forEach((prereq: any, index: number) => {
+        console.log(`  📋 Prerequisite ${index + 1}:`, prereq);
+      });
+    } else {
+      console.log('❌ Prerequisites is not a valid array');
+    }
+    
+    res.json({
+      message: 'Course data structure test completed',
+      summary: {
+        curriculumModules: curriculum?.length || 0,
+        totalLessons: curriculum?.reduce((acc: number, mod: any) => acc + (mod.lessons?.length || 0), 0) || 0,
+        learningOutcomesCount: learningOutcomes?.length || 0,
+        prerequisitesCount: prerequisites?.length || 0
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error testing course data:', error);
+    res.status(500).json({ 
+      error: 'Failed to test course data structure',
+      details: (error as Error).message 
+    });
   }
 }; 

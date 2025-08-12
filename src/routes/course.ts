@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { authenticateJWT } from '../middlewares/authMiddleware';
+import { authorizeRoles } from '../middlewares/authorizeRoles';
+import { validateRequest } from '../middlewares/validateRequest';
+import { createCourseSchema, updateCourseSchema } from '../middlewares/validators/courseValidation';
 import {
-  getAllCourses, getCourseById, createCourseWithDetails, updateCourseWithDetails, deleteCourse, getLandingPageCourses, getLandingCoursesPublic
+  getAllCourses, getCourseById, createCourseWithDetails, updateCourseWithDetails, deleteCourse, getLandingPageCourses, getLandingCoursesPublic, testCourseData
 } from '../controllers/courseController';
 
 const router = Router();
@@ -515,7 +518,10 @@ router.get('/:id', authenticateJWT, getCourseById);
  *       500:
  *         description: Server error
  */
-router.post('/comprehensive', authenticateJWT, createCourseWithDetails);
+router.post('/comprehensive', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT'), validateRequest(createCourseSchema), createCourseWithDetails);
+
+// Test endpoint for debugging course data structure
+router.post('/test-data', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT'), testCourseData);
 
 /**
  * @swagger
@@ -685,7 +691,7 @@ router.post('/comprehensive', authenticateJWT, createCourseWithDetails);
  *       500:
  *         description: Server error
  */
-router.put('/:id/comprehensive', authenticateJWT, updateCourseWithDetails);
+router.put('/:id/comprehensive', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT'), validateRequest(updateCourseSchema), updateCourseWithDetails);
 
 /**
  * @swagger
