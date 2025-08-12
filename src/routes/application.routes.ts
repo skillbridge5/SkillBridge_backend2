@@ -56,7 +56,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticateJWT,
-  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'INSTRUCTOR'),
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'),
   getAllApplications
 );
 
@@ -101,7 +101,12 @@ router.get(
  *       404:
  *         description: Application not found
  */
-router.get('/:id', authenticateJWT, getApplicationById);
+router.get(
+  '/:id', 
+  authenticateJWT, 
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'),
+  getApplicationById
+);
 
 /**
  * @swagger
@@ -288,7 +293,7 @@ router.post(
 router.patch(
   '/:id',
   authenticateJWT,
-  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'INSTRUCTOR'),
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'),
   validateRequest(applicationUpdateSchema),
   updateApplication
 );
