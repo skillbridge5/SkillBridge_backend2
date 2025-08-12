@@ -49,7 +49,7 @@ export const getApplicationById = async (req: Request, res: Response) => {
     if (!application) return res.status(404).json({ error: 'Application not found' });
     if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
 
-    if (req.user.role !== 'ADMIN' && req.user.role !== 'INSTRUCTOR' &&
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'SUPPORT' && req.user.role !== 'INSTRUCTOR' &&
         application.studentId !== req.user.id) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
