@@ -192,10 +192,21 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
       // Create modules and lessons from curriculum
       if (curriculum && curriculum.length > 0) {
         console.log('📖 Creating curriculum with modules:', curriculum.length);
+        console.log('📋 Curriculum data:', JSON.stringify(curriculum, null, 2));
         
         for (let moduleIndex = 0; moduleIndex < curriculum.length; moduleIndex++) {
           const moduleData = curriculum[moduleIndex];
-          console.log(`📚 Creating module ${moduleIndex + 1}:`, moduleData.title);
+          console.log(`📚 Creating module ${moduleIndex + 1}:`, {
+            title: moduleData.title,
+            duration: moduleData.duration,
+            lessonsCount: moduleData.lessons?.length || 0
+          });
+          
+          // Validate module data
+          if (!moduleData.title || !moduleData.duration) {
+            console.error(`❌ Module ${moduleIndex + 1} missing required fields:`, moduleData);
+            throw new Error(`Module ${moduleIndex + 1} is missing title or duration`);
+          }
           
           const module = await tx.courseModule.create({
             data: {
@@ -211,6 +222,7 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
           // Create lessons for this module
           if (moduleData.lessons && Array.isArray(moduleData.lessons) && moduleData.lessons.length > 0) {
             console.log(`📝 Creating ${moduleData.lessons.length} lessons for module:`, moduleData.title);
+            console.log(`📋 Lessons data:`, JSON.stringify(moduleData.lessons, null, 2));
             
             const lessonsData = moduleData.lessons.map((lesson: unknown, lessonIndex: number) => ({
               moduleId: module.id,
@@ -224,9 +236,15 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
                 data: lessonsData
               });
               console.log(`✅ ${lessonsData.length} lessons created for module:`, moduleData.title);
+            } else {
+              console.log(`⚠️ No valid lessons found for module:`, moduleData.title);
             }
+          } else {
+            console.log(`ℹ️ No lessons provided for module:`, moduleData.title);
           }
         }
+      } else {
+        console.log('⚠️ No curriculum provided, course will be created without modules');
       }
 
       // Only return the new course ID
@@ -357,27 +375,40 @@ export const updateCourseWithDetails = async (req: Request, res: Response) => {
 
       // Delete existing learning outcomes and create new ones
       await tx.learningOutcome.deleteMany({ where: { courseId: id } });
-      if (learningOutcomes.length > 0) {
-        await tx.learningOutcome.createMany({
-          data: learningOutcomes.map((outcome: any) => ({
-            courseId: id,
-            text: typeof outcome === 'string' ? outcome : outcome.text
-          }))
-        });
+      if (learningOutcomes && learningOutcomes.length > 0) {
+        console.log('📚 Updating learning outcomes:', learningOutcomes.length);
+        const outcomesData = learningOutcomes.map((outcome: unknown) => ({
+          courseId: id,
+          text: String(outcome).trim()
+        })).filter((outcome: any) => outcome.text.length > 0);
+        
+        if (outcomesData.length > 0) {
+          await tx.learningOutcome.createMany({
+            data: outcomesData
+          });
+          console.log('✅ Learning outcomes updated:', outcomesData.length);
+        }
       }
 
       // Delete existing prerequisites and create new ones
       await tx.prerequisite.deleteMany({ where: { courseId: id } });
-      if (prerequisites.length > 0) {
-        await tx.prerequisite.createMany({
-          data: prerequisites.map((prereq: any) => ({
-            courseId: id,
-            text: typeof prereq === 'string' ? prereq : prereq.text
-          }))
-        });
+      if (prerequisites && prerequisites.length > 0) {
+        console.log('📋 Updating prerequisites:', prerequisites.length);
+        const prereqData = prerequisites.map((prereq: unknown) => ({
+          courseId: id,
+          text: String(prereq).trim()
+        })).filter((prereq: any) => prereq.text.length > 0);
+        
+        if (prereqData.length > 0) {
+          await tx.prerequisite.createMany({
+            data: prereqData
+          });
+          console.log('✅ Prerequisites updated:', prereqData.length);
+        }
       }
 
       // Delete existing modules and lessons, then create new ones from curriculum
+      console.log('🗑️ Deleting existing modules and lessons...');
       await tx.courseLesson.deleteMany({
         where: {
           module: {
@@ -386,32 +417,48 @@ export const updateCourseWithDetails = async (req: Request, res: Response) => {
         }
       });
       await tx.courseModule.deleteMany({ where: { courseId: id } });
+      console.log('✅ Existing modules and lessons deleted');
 
-      if (curriculum.length > 0) {
+      // Create new modules and lessons from curriculum
+      if (curriculum && curriculum.length > 0) {
+        console.log('📖 Updating curriculum with modules:', curriculum.length);
+        
         for (let moduleIndex = 0; moduleIndex < curriculum.length; moduleIndex++) {
           const moduleData = curriculum[moduleIndex];
+          console.log(`📚 Updating module ${moduleIndex + 1}:`, moduleData.title);
           
           const module = await tx.courseModule.create({
             data: {
               courseId: id,
-              title: moduleData.title,
-              duration: moduleData.duration,
+              title: moduleData.title.trim(),
+              duration: moduleData.duration.trim(),
               order: moduleIndex + 1
             }
           });
+          
+          console.log(`✅ Module updated with ID:`, module.id);
 
           // Create lessons for this module
-          if (moduleData.lessons && moduleData.lessons.length > 0) {
-            await tx.courseLesson.createMany({
-              data: moduleData.lessons.map((lesson: any, lessonIndex: number) => ({
-                moduleId: module.id,
-                title: lesson.title,
-                duration: lesson.duration || '30 min',
-                order: lessonIndex + 1
-              }))
-            });
+          if (moduleData.lessons && Array.isArray(moduleData.lessons) && moduleData.lessons.length > 0) {
+            console.log(`📝 Creating ${moduleData.lessons.length} lessons for module:`, moduleData.title);
+            
+            const lessonsData = moduleData.lessons.map((lesson: unknown, lessonIndex: number) => ({
+              moduleId: module.id,
+              title: String((lesson as any).title).trim(),
+              duration: (lesson as any).duration ? String((lesson as any).duration).trim() : '30 min',
+              order: lessonIndex + 1
+            })).filter((lesson: any) => lesson.title.length > 0);
+            
+            if (lessonsData.length > 0) {
+              await tx.courseLesson.createMany({
+                data: lessonsData
+              });
+              console.log(`✅ ${lessonsData.length} lessons created for module:`, moduleData.title);
+            }
           }
         }
+      } else {
+        console.log('⚠️ No curriculum provided, modules will remain empty');
       }
 
     
@@ -565,6 +612,39 @@ export const testCourseData = async (req: Request, res: Response) => {
         console.log(`📚 Module ${i + 1}:`, {
           title: module.title,
           duration: module.duration,
+          lessonsCount: module.lessons?.length || 0,
+          hasTitle: !!module.title,
+          hasDuration: !!module.duration,
+          lessonsIsArray: Array.isArray(module.lessons)
+        });
+        
+        if (module.lessons && Array.isArray(module.lessons)) {
+          for (let j = 0; j < module.lessons.length; j++) {
+            const lesson = module.lessons[j];
+            console.log(`  📝 Lesson ${j + 1}:`, {
+              title: lesson.title,
+              duration: lesson.duration,
+              hasTitle: !!lesson.title,
+              hasDuration: !!lesson.duration
+            });
+          }
+        }
+      }
+    } else {
+      console.log('❌ Curriculum is not a valid array');
+      console.log('📋 Curriculum type:', typeof curriculum);
+      console.log('📋 Curriculum value:', curriculum);
+    }
+    
+    // Validate curriculum structure
+    if (curriculum && Array.isArray(curriculum)) {
+      console.log('✅ Curriculum is an array with', curriculum.length, 'modules');
+      
+      for (let i = 0; i < curriculum.length; i++) {
+        const module = curriculum[i];
+        console.log(`📚 Module ${i + 1}:`, {
+          title: module.title,
+          duration: module.duration,
           lessonsCount: module.lessons?.length || 0
         });
         
@@ -620,3 +700,5 @@ export const testCourseData = async (req: Request, res: Response) => {
     });
   }
 }; 
+
+ 
