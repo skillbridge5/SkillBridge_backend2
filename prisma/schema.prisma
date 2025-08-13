@@ -22,20 +22,20 @@ model InstructorExpertise {
 }
 
 model User {
-  id                String             @id @default(uuid())
-  name              String
-  email             String             @unique
-  password          String
-  role              Role               @default(ADMIN)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  lastLogin         DateTime?
-  status            String             @default("ACTIVE")
-  adminProfile      AdminProfile?
-  coursesTaught     Course[]           @relation("InstructorCourses")
-  instructorProfile InstructorProfile?
-  studentProfile    StudentProfile?
+  id                 String               @id @default(uuid())
+  name               String
+  email              String               @unique
+  password           String
+  role               Role                 @default(ADMIN)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  lastLogin          DateTime?
+  status             String               @default("ACTIVE")
+  adminProfile       AdminProfile?
+  coursesTaught      Course[]             @relation("InstructorCourses")
+  instructorProfile  InstructorProfile?
   StudentApplication StudentApplication[]
+  studentProfile     StudentProfile?
 }
 
 model StudentProfile {
@@ -76,22 +76,23 @@ model Category {
 }
 
 model Course {
-  id                  String            @id @default(uuid())
+  id                  String               @id @default(uuid())
   title               String
   shortDescription    String
   detailedDescription String
   imageUrl            String?
   priceOriginal       Float
   priceDiscounted     Float
-  status              CourseStatus      @default(DRAFT)
+  status              CourseStatus         @default(DRAFT)
   level               CourseLevel
   duration            String
   categoryId          String
   instructorId        String
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  category            Category          @relation(fields: [categoryId], references: [id])
-  instructor          User              @relation("InstructorCourses", fields: [instructorId], references: [id])
+  enrollmentStatus    EnrollmentStatus     @default(CLOSED)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  category            Category             @relation(fields: [categoryId], references: [id])
+  instructor          User                 @relation("InstructorCourses", fields: [instructorId], references: [id])
   modules             CourseModule[]
   learningOutcomes    LearningOutcome[]
   prerequisites       Prerequisite[]
@@ -134,34 +135,29 @@ model Prerequisite {
 model StudentApplication {
   id               String            @id @default(uuid())
   studentId        String?
-  student          User?              @relation(fields: [studentId], references: [id])
   courseId         String
-  course           Course            @relation(fields: [courseId], references: [id])
   paymentMethod    String
   paymentReference String
   status           ApplicationStatus @default(PENDING)
   submittedAt      DateTime          @default(now())
   reviewedAt       DateTime?
-  reviewedBy       String? // Admin
+  reviewedBy       String?
   adminNotes       String?
   marketingSource  String?
-
-  // Personal details
-  fullName       String
-  dateOfBirth    DateTime
-  gender         String
-  nationality    String? // newly added
-  university     String?
-  email          String
-  phone          String
-  telegramHandle String?
-  address        String? // now optional
-
-  // Receipt handling
-  receiptUrl      String?
-  receiptVerified Boolean @default(false)
-
-  paymentOption   String? // newly added
+  fullName         String
+  dateOfBirth      DateTime
+  gender           String
+  nationality      String?
+  university       String?
+  email            String
+  phone            String
+  telegramHandle   String?
+  address          String?
+  receiptUrl       String?
+  receiptVerified  Boolean           @default(false)
+  paymentOption    String?
+  course           Course            @relation(fields: [courseId], references: [id])
+  student          User?             @relation(fields: [studentId], references: [id])
 
   @@index([studentId])
   @@index([courseId])
@@ -173,60 +169,60 @@ model ContactMessage {
   email     String
   phone     String
   message   String
-  status    String   @default("new") // new, read, replied
+  status    String   @default("new")
   createdAt DateTime @default(now())
 }
 
 model PlatformSettings {
-  id          String   @id @default(uuid())
-  siteName    String   @default("SkillBridge")
-  contactEmail String  @default("contact@skillbridge.com")
-  siteDescription String @default("Bridging Gaps, Building Skills, Transforming Futures")
-  contactPhone String  @default("+251 2345 4365")
-  address     String   @default("123 Education Street, Learning City")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(uuid())
+  siteName        String   @default("SkillBridge")
+  contactEmail    String   @default("contact@skillbridge.com")
+  siteDescription String   @default("Bridging Gaps, Building Skills, Transforming Futures")
+  contactPhone    String   @default("+251 2345 4365")
+  address         String   @default("123 Education Street, Learning City")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model EmailSettings {
-  id          String   @id @default(uuid())
-  smtpHost    String   @default("smtp.gmail.com")
-  smtpPort    Int      @default(587)
-  smtpUsername String  @default("admin@edutech.com")
-  smtpPassword String  @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  smtpHost     String   @default("smtp.gmail.com")
+  smtpPort     Int      @default(587)
+  smtpUsername String   @default("admin@edutech.com")
+  smtpPassword String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model SecuritySettings {
-  id                    String   @id @default(uuid())
-  allowUserRegistration Boolean  @default(true)
-  requireEmailVerification Boolean @default(true)
-  enableNotifications   Boolean  @default(true)
-  maintenanceMode      Boolean  @default(false)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                       String   @id @default(uuid())
+  allowUserRegistration    Boolean  @default(true)
+  requireEmailVerification Boolean  @default(true)
+  enableNotifications      Boolean  @default(true)
+  maintenanceMode          Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 model SocialSettings {
-  id          String   @id @default(uuid())
-  facebookUrl String?  @default("https://facebook.com/yourpage")
-  twitterUrl  String?  @default("https://twitter.com/yourhandle")
-  linkedinUrl String?  @default("https://linkedin.com/company/yourcompany")
-  instagramUrl String? @default("https://instagram.com/yourhandle")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  facebookUrl  String?  @default("https://facebook.com/yourpage")
+  twitterUrl   String?  @default("https://twitter.com/yourhandle")
+  linkedinUrl  String?  @default("https://linkedin.com/company/yourcompany")
+  instagramUrl String?  @default("https://instagram.com/yourhandle")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model AdvancedSettings {
-  id                String   @id @default(uuid())
-  debugMode         Boolean  @default(false)
-  logLevel          String   @default("info")
-  cacheEnabled      Boolean  @default(true)
-  maxUploadSize     Int      @default(5242880) // 5MB in bytes
-  sessionTimeout    Int      @default(3600) // 1 hour in seconds
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id             String   @id @default(uuid())
+  debugMode      Boolean  @default(false)
+  logLevel       String   @default("info")
+  cacheEnabled   Boolean  @default(true)
+  maxUploadSize  Int      @default(5242880)
+  sessionTimeout Int      @default(3600)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Notification {
@@ -255,6 +251,11 @@ enum CategoryStatus {
 enum CourseStatus {
   DRAFT
   PUBLISHED
+}
+
+enum EnrollmentStatus {
+  OPEN
+  CLOSED
 }
 
 enum CourseLevel {

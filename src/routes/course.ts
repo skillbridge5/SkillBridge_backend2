@@ -4,7 +4,7 @@ import { authorizeRoles } from '../middlewares/authorizeRoles';
 import { validateRequest } from '../middlewares/validateRequest';
 import { createCourseSchema, updateCourseSchema } from '../middlewares/validators/courseValidation';
 import {
-  getAllCourses, getCourseById, createCourseWithDetails, updateCourseWithDetails, deleteCourse, getLandingPageCourses, getLandingCoursesPublic, testCourseData
+  getAllCourses, getCourseById, createCourseWithDetails, updateCourseWithDetails, deleteCourse, getLandingPageCourses, getLandingCoursesPublic, testCourseData, openCourseEnrollment, closeCourseEnrollment, getCourseEnrollmentStatus
 } from '../controllers/courseController';
 
 const router = Router();
@@ -522,6 +522,127 @@ router.post('/comprehensive', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_AD
 
 // Test endpoint for debugging course data structure
 router.post('/test-data', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT'), testCourseData);
+
+// Course enrollment management endpoints
+/**
+ * @swagger
+ * /api/courses/{id}/enrollment/open:
+ *   patch:
+ *     summary: Open course enrollment
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Course ID
+ *     responses:
+ *       200:
+ *         description: Course enrollment opened successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Course enrollment opened successfully"
+ *                 course:
+ *                   $ref: '#/components/schemas/Course'
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.patch('/:id/enrollment/open', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'), openCourseEnrollment);
+
+/**
+ * @swagger
+ * /api/courses/{id}/enrollment/close:
+ *   patch:
+ *     summary: Close course enrollment
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Course ID
+ *     responses:
+ *       200:
+ *         description: Course enrollment closed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Course enrollment closed successfully"
+ *                 course:
+ *                   $ref: '#/components/schemas/Course'
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.patch('/:id/enrollment/close', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'), closeCourseEnrollment);
+
+/**
+ * @swagger
+ * /api/courses/{id}/enrollment/status:
+ *   get:
+ *     summary: Get course enrollment status
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Course ID
+ *     responses:
+ *       200:
+ *         description: Course enrollment status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 courseId:
+ *                   type: string
+ *                   example: "a3d87899-3b7b-4a4c-9165-2f456428136c"
+ *                 title:
+ *                   type: string
+ *                   example: "Vue3 for beginners"
+ *                 enrollmentStatus:
+ *                   type: string
+ *                   enum: [OPEN, CLOSED]
+ *                   example: "CLOSED"
+ *                 courseStatus:
+ *                   type: string
+ *                   enum: [DRAFT, PUBLISHED]
+ *                   example: "DRAFT"
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/:id/enrollment/status', authenticateJWT, getCourseEnrollmentStatus);
 
 /**
  * @swagger

@@ -14,10 +14,15 @@ export const getAllCourses = async (req: Request, res: Response) => {
         }, 
         learningOutcomes: true, 
         prerequisites: true 
-      } 
+      },
+      orderBy: { createdAt: 'desc' }
     });
+    
+    console.log(`📚 Retrieved ${courses.length} courses with enrollment status`);
+    
     res.json(courses);
   } catch (error) {
+    console.error('❌ Error retrieving courses:', error);
     res.status(500).json({ error: (error as Error).message });
   }
 };
@@ -39,8 +44,12 @@ export const getCourseById = async (req: Request, res: Response) => {
       } 
     });
     if (!course) return res.status(404).json({ error: 'Course not found' });
+    
+    console.log(`📚 Retrieved course: ${course.title} (Enrollment: ${course.enrollmentStatus})`);
+    
     res.json(course);
   } catch (error) {
+    console.error('❌ Error retrieving course:', error);
     res.status(500).json({ error: (error as Error).message });
   }
 };
@@ -136,6 +145,7 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
 
     // Use transaction to ensure all data is created atomically
     const createdCourse = await prisma.$transaction(async (tx) => {
+      // Transaction timeout increased to 30 seconds for complex course creation
       console.log('🔄 Starting database transaction...');
       
       // Create the main course
@@ -152,6 +162,7 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
           duration,
           categoryId,
           instructorId,
+          enrollmentStatus: 'CLOSED', // Always start as closed
         },
       });
       
@@ -249,6 +260,8 @@ export const createCourseWithDetails = async (req: Request, res: Response) => {
 
       // Only return the new course ID
       return course.id;
+    }, {
+      timeout: 30000 // 30 seconds timeout for complex operations
     });
 
     // Fetch the complete course with all related data OUTSIDE the transaction
@@ -365,11 +378,12 @@ export const updateCourseWithDetails = async (req: Request, res: Response) => {
           imageUrl,
           priceOriginal: parseFloat(priceOriginal),
           priceDiscounted: parseFloat(priceDiscounted),
-          status: status as any,
-          level: level as any,
+          status: status as 'DRAFT' | 'PUBLISHED',
+          level: level as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'ALL_LEVELS',
           duration,
           categoryId,
           instructorId,
+          // Note: enrollmentStatus is not updated here - use separate endpoints
         },
       });
 
@@ -463,6 +477,8 @@ export const updateCourseWithDetails = async (req: Request, res: Response) => {
 
     
       return true; // just return a flag or id
+    }, {
+      timeout: 30000 // 30 seconds timeout for complex operations
     });
 
 
@@ -696,6 +712,138 @@ export const testCourseData = async (req: Request, res: Response) => {
     console.error('❌ Error testing course data:', error);
     res.status(500).json({ 
       error: 'Failed to test course data structure',
+      details: (error as Error).message 
+    });
+  }
+}; 
+
+// Open course enrollment
+export const openCourseEnrollment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('🔓 Opening enrollment for course:', id);
+    
+    // Check if course exists
+    const existingCourse = await prisma.course.findUnique({ where: { id } });
+    if (!existingCourse) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    
+    // Update enrollment status to OPEN
+    const updatedCourse = await prisma.course.update({
+      where: { id },
+      data: { enrollmentStatus: 'OPEN' },
+      include: {
+        category: true,
+        instructor: true,
+        modules: {
+          include: { lessons: { orderBy: { order: 'asc' } } },
+          orderBy: { order: 'asc' }
+        },
+        learningOutcomes: true,
+        prerequisites: true
+      }
+    });
+    
+    console.log('✅ Course enrollment opened successfully');
+    
+    res.json({
+      message: 'Course enrollment opened successfully',
+      course: updatedCourse
+    });
+    
+  } catch (error) {
+    console.error('❌ Error opening course enrollment:', error);
+    res.status(500).json({ 
+      error: 'Failed to open course enrollment',
+      details: (error as Error).message 
+    });
+  }
+};
+
+// Close course enrollment
+export const closeCourseEnrollment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('🔒 Closing enrollment for course:', id);
+    
+    // Check if course exists
+    const existingCourse = await prisma.course.findUnique({ where: { id } });
+    if (!existingCourse) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    
+    // Update enrollment status to CLOSED
+    const updatedCourse = await prisma.course.update({
+      where: { id },
+      data: { enrollmentStatus: 'CLOSED' },
+      include: {
+        category: true,
+        instructor: true,
+        modules: {
+          include: { lessons: { orderBy: { order: 'asc' } } },
+          orderBy: { order: 'asc' }
+        },
+        learningOutcomes: true,
+        prerequisites: true
+      }
+    });
+    
+    console.log('✅ Course enrollment closed successfully');
+    
+    res.json({
+      message: 'Course enrollment closed successfully',
+      course: updatedCourse
+    });
+    
+  } catch (error) {
+    console.error('❌ Error closing course enrollment:', error);
+    res.status(500).json({ 
+      error: 'Failed to close course enrollment',
+      details: (error as Error).message 
+    });
+  }
+};
+
+// Get course enrollment status
+export const getCourseEnrollmentStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('📊 Getting enrollment status for course:', id);
+    
+    // Check if course exists
+    const course = await prisma.course.findUnique({ 
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        enrollmentStatus: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    
+    res.json({
+      courseId: course.id,
+      title: course.title,
+      enrollmentStatus: course.enrollmentStatus,
+      courseStatus: course.status,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt
+    });
+    
+  } catch (error) {
+    console.error('❌ Error getting course enrollment status:', error);
+    res.status(500).json({ 
+      error: 'Failed to get course enrollment status',
       details: (error as Error).message 
     });
   }
