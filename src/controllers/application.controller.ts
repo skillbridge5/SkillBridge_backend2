@@ -62,17 +62,14 @@ export const getApplicationById = async (req: Request, res: Response) => {
 
 export const createApplication = async (req: Request, res: Response) => {
   try {
-    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
     const input: ApplicationCreateInput = req.body;
 
     const course = await prisma.course.findUnique({ where: { id: input.courseId } });
     if (!course) return res.status(404).json({ error: 'Course not found' });
 
-    // Always set studentId from session
-    const data: any = { ...input, studentId: req.user.id };
+    // For public applications, studentId will be null initially
+    const data: any = { ...input };
     delete data.student; // In case someone tries to send a student object
-    delete data.studentId; // Remove any spoofed studentId from body, then set correct one
-    data.studentId = req.user.id;
 
     const application = await prisma.studentApplication.create({
       data
@@ -210,7 +207,6 @@ export const downloadApplicationReceipt = async (req: Request, res: Response) =>
 
 export const createApplicationWithReceipt = async (req: Request, res: Response) => {
   try {
-    if (!req.user) return res.status(403).json({ error: 'Unauthorized' });
     if (!req.file || !(req.file as any).location) {
       return res.status(400).json({ error: 'Receipt file is required' });
     }
@@ -226,13 +222,11 @@ export const createApplicationWithReceipt = async (req: Request, res: Response) 
     const application = await prisma.studentApplication.create({
       data: {
         ...input,
-        studentId: req.user.id,
         receiptUrl: fileUrl,
         status: 'PENDING'
       },
       include: {
-        course: { select: { title: true } },
-        student: { select: { name: true } }
+        course: { select: { title: true } }
       }
     });
 
