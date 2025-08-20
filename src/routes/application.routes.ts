@@ -56,7 +56,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticateJWT,
-  authorizeRoles('ADMIN', 'INSTRUCTOR'),
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'),
   getAllApplications
 );
 
@@ -101,16 +101,19 @@ router.get(
  *       404:
  *         description: Application not found
  */
-router.get('/:id', authenticateJWT, getApplicationById);
+router.get(
+  '/:id', 
+  authenticateJWT, 
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'),
+  getApplicationById
+);
 
 /**
  * @swagger
  * /api/applications:
  *   post:
- *     summary: Create a new application
+ *     summary: Create a new application (public endpoint - no authentication required)
  *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -127,8 +130,6 @@ router.get('/:id', authenticateJWT, getApplicationById);
  */
 router.post(
   '/',
-  authenticateJWT,
-  authorizeRoles('STUDENT'),
   validateRequest(applicationCreateSchema),
   createApplication
 );
@@ -137,11 +138,9 @@ router.post(
  * @swagger
  * /api/applications/with-receipt:
  *   post:
- *     summary: Create a new application with receipt upload in a single request
+ *     summary: Create a new application with receipt upload in a single request (public endpoint - no authentication required)
  *     description: This endpoint allows students to submit their application along with a payment receipt in one atomic transaction. This solves the chicken-and-egg problem where receipt upload previously required an application ID.
  *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
  *     consumes:
  *       - multipart/form-data
  *     requestBody:
@@ -153,13 +152,10 @@ router.post(
  *             required:
  *               - courseId
  *               - paymentMethod
- *               - paymentReference
  *               - fullName
- *               - dateOfBirth
  *               - gender
  *               - email
  *               - phone
- *               - address
  *               - receipt
  *             properties:
  *               courseId:
@@ -175,7 +171,7 @@ router.post(
  *               paymentReference:
  *                 type: string
  *                 minLength: 3
- *                 description: Transaction reference or ID
+ *                 description: Transaction reference or ID (optional)
  *                 example: "TXN123456789"
  *               marketingSource:
  *                 type: string
@@ -189,7 +185,7 @@ router.post(
  *               dateOfBirth:
  *                 type: string
  *                 format: date-time
- *                 description: Student's date of birth
+ *                 description: Student's date of birth (optional)
  *                 example: "1990-01-01T00:00:00.000Z"
  *               gender:
  *                 type: string
@@ -197,11 +193,11 @@ router.post(
  *                 example: "male"
  *               nationality:
  *                 type: string
- *                 description: Student's nationality
+ *                 description: Student's nationality (optional)
  *                 example: "Ethiopian"
  *               university:
  *                 type: string
- *                 description: Student's university
+ *                 description: Student's university (optional)
  *                 example: "Addis Ababa University"
  *               email:
  *                 type: string
@@ -218,7 +214,7 @@ router.post(
  *                 example: "@johndoe"
  *               address:
  *                 type: string
- *                 description: Student's address
+ *                 description: Student's address (optional)
  *                 example: "Addis Ababa, Ethiopia"
  *               paymentOption:
  *                 type: string
@@ -240,11 +236,7 @@ router.post(
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ApplicationError'
- *       401:
- *         description: Unauthorized - Invalid or missing token
- *       403:
- *         description: Forbidden - Insufficient permissions
+ *               '#/components/schemas/ApplicationError'
  *       404:
  *         description: Course not found
  *       500:
@@ -252,8 +244,6 @@ router.post(
  */
 router.post(
   '/with-receipt',
-  authenticateJWT,
-  authorizeRoles('STUDENT'),
   upload.single('receipt'),
   validateRequest(applicationCreateSchema),
   createApplicationWithReceipt
@@ -288,7 +278,7 @@ router.post(
 router.patch(
   '/:id',
   authenticateJWT,
-  authorizeRoles('ADMIN', 'INSTRUCTOR'),
+  authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'INSTRUCTOR'),
   validateRequest(applicationUpdateSchema),
   updateApplication
 );

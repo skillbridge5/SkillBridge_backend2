@@ -6,6 +6,10 @@ import categoryRoutes from './routes/category';
 import courseRoutes from './routes/course';
 import instructorRoutes from './routes/instructor';
 import adminRoutes from './routes/admin';
+import settingsRoutes from './routes/settings';
+import dashboardRoutes from './routes/dashboard';
+import notificationRoutes from './routes/notifications';
+import searchRoutes from './routes/search';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import applicationRoutes from './routes/application.routes';
@@ -26,6 +30,10 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/search', searchRoutes);
 
 const uploadsDir = path.join(__dirname, 'uploads/receipts');
 if (!existsSync(uploadsDir)) {
@@ -47,7 +55,7 @@ const swaggerDefinition = {
   },
   servers: [
     { url: 'http://localhost:4000', description: 'Development server' },
-    { url: 'https://skillbridge-backend-w2s4.onrender.com', description: 'Production server (Render)' },
+    { url: 'https://skillbridge-backend2.onrender.com', description: 'Production server (Render)' },
   ],
   components: {
     securitySchemes: {
@@ -276,6 +284,111 @@ const swaggerDefinition = {
           user: { $ref: '#/components/schemas/AdminUserResponse' },
         },
       },
+      PlatformSettings: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'settings-12345678-1234-1234-1234-123456789abc' },
+          siteName: { type: 'string', example: 'SkillBridge' },
+          contactEmail: { type: 'string', format: 'email', example: 'contact@skillbridge.com' },
+          siteDescription: { type: 'string', example: 'Bridging Gaps, Building Skills, Transforming Futures' },
+          contactPhone: { type: 'string', example: '+251 2345 4365' },
+          address: { type: 'string', example: '123 Education Street, Learning City' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      PlatformSettingsUpdateRequest: {
+        type: 'object',
+        required: ['siteName', 'contactEmail', 'siteDescription', 'contactPhone', 'address'],
+        properties: {
+          siteName: { type: 'string', example: 'SkillBridge' },
+          contactEmail: { type: 'string', format: 'email', example: 'contact@skillbridge.com' },
+          siteDescription: { type: 'string', example: 'Bridging Gaps, Building Skills, Transforming Futures' },
+          contactPhone: { type: 'string', example: '+251 2345 4365' },
+          address: { type: 'string', example: '123 Education Street, Learning City' },
+        },
+      },
+      Course: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'course-12345678-1234-1234-1234-123456789abc' },
+          title: { type: 'string', example: 'Complete Web Development Bootcamp' },
+          shortDescription: { type: 'string', example: 'Learn HTML, CSS, JavaScript, React, Node.js and more' },
+          detailedDescription: { type: 'string', example: 'A comprehensive course covering all aspects of web development' },
+          imageUrl: { type: 'string', example: 'https://example.com/course-image.jpg', nullable: true },
+          priceOriginal: { type: 'number', example: 99.99 },
+          priceDiscounted: { type: 'number', example: 79.99 },
+          status: { type: 'string', enum: ['DRAFT', 'PUBLISHED'], example: 'PUBLISHED' },
+          level: { type: 'string', enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'ALL_LEVELS'], example: 'BEGINNER' },
+          duration: { type: 'string', example: '12 weeks' },
+          categoryId: { type: 'string', example: 'category-12345678-1234-1234-1234-123456789abc' },
+          instructorId: { type: 'string', example: 'instructor-12345678-1234-1234-1234-123456789abc' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          category: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'category-12345678-1234-1234-1234-123456789abc' },
+              name: { type: 'string', example: 'Software Engineering' },
+              description: { type: 'string', example: 'Software development and programming courses' },
+              status: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' }
+            }
+          },
+          instructor: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'instructor-12345678-1234-1234-1234-123456789abc' },
+              name: { type: 'string', example: 'John Smith' },
+              email: { type: 'string', format: 'email', example: 'john.smith@edutech.com' },
+              role: { type: 'string', example: 'INSTRUCTOR' }
+            }
+          },
+          modules: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'module-12345678-1234-1234-1234-123456789abc' },
+                title: { type: 'string', example: 'Introduction to HTML' },
+                duration: { type: 'string', example: '2 hours' },
+                order: { type: 'integer', example: 1 },
+                lessons: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string', example: 'lesson-12345678-1234-1234-1234-123456789abc' },
+                      title: { type: 'string', example: 'HTML Basics' },
+                      duration: { type: 'string', example: '30 minutes' },
+                      order: { type: 'integer', example: 1 }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          learningOutcomes: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'outcome-12345678-1234-1234-1234-123456789abc' },
+                text: { type: 'string', example: 'Build responsive websites using HTML, CSS, and JavaScript' }
+              }
+            }
+          },
+          prerequisites: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'prerequisite-12345678-1234-1234-1234-123456789abc' },
+                text: { type: 'string', example: 'Basic computer literacy' }
+              }
+            }
+          }
+        }
+      },
     },
   },
   security: [
@@ -285,7 +398,7 @@ const swaggerDefinition = {
 
 const swaggerOptions = {
   swaggerDefinition,
-  apis: ['./src/routes/*.ts'],
+  apis: [process.env.NODE_ENV === 'production' ? './dist/routes/*.js' : './src/routes/*.ts'],
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);

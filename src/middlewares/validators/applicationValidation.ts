@@ -3,16 +3,17 @@ import { z } from 'zod';
 export const applicationCreateSchema = z.object({
   courseId: z.string().uuid(),
   paymentMethod: z.string(),
-  paymentReference: z.string().min(3),
+  paymentReference: z.string().min(3).optional(),
   marketingSource: z.string().optional(),
   fullName: z.string().min(3),
-  dateOfBirth: z.string().datetime(),
+  dateOfBirth: z.string().datetime().optional(),
   gender: z.string(),
+  nationality: z.string().optional(),
   university: z.string().optional(),
   email: z.string().email(),
   phone: z.string(),
   telegramHandle: z.string().optional(),
-  address: z.string(),
+  address: z.string().optional(),
   paymentOption: z.string().optional(),
 });
 

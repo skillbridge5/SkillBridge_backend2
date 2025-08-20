@@ -4,7 +4,8 @@ import {
   getAllContactMessages,
   getContactMessageById,
   deleteContactMessage,
-  exportContactMessages
+  exportContactMessages,
+  updateContactMessageStatus
 } from '../controllers/contactController';
 import { authenticateJWT } from '../middlewares/authMiddleware';
 import { authorizeRoles } from '../middlewares/authorizeRoles';
@@ -146,6 +147,76 @@ import { authorizeRoles } from '../middlewares/authorizeRoles';
 
 /**
  * @swagger
+ * /api/contact/{id}/status:
+ *   patch:
+ *     summary: Update contact message status (admin only)
+ *     tags: [Contact]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Contact message ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [new, read, replied]
+ *                 example: read
+ *                 description: New status for the contact message
+ *     responses:
+ *       200:
+ *         description: Contact message status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Contact message status updated successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     message:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Invalid status value
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Contact message not found
+ *       500:
+ *         description: Server error
+ */
+
+/**
+ * @swagger
  * /api/contact/export/csv:
  *   get:
  *     summary: Export all contact messages as CSV (admin only)
@@ -181,6 +252,9 @@ router.get('/:id', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPP
 
 // Admin: Delete a contact message
 router.delete('/:id', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT'), deleteContactMessage);
+
+// Admin: Update contact message status
+router.patch('/:id/status', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT'), updateContactMessageStatus);
 
 // Admin: Export contact messages (CSV)
 router.get('/export/csv', authenticateJWT, authorizeRoles('ADMIN', 'SUPER_ADMIN', 'SUPPORT'), exportContactMessages);

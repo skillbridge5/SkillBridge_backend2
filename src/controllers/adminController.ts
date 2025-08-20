@@ -54,7 +54,8 @@ export const createAdmin = async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.issues });
     }
     const { name, email, password, role, status } = parsed.data;
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return res.status(409).json({ error: 'User already exists' });
     }
@@ -62,7 +63,7 @@ export const createAdmin = async (req: Request, res: Response) => {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         role,
         status: status || 'ACTIVE',
@@ -107,7 +108,18 @@ export const updateAdmin = async (req: Request, res: Response) => {
 export const deleteAdmin = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.user.delete({ where: { id } });
+    
+    // First delete the admin profile, then the user
+    await prisma.$transaction(async (tx) => {
+      // Delete admin profile first
+      await tx.adminProfile.deleteMany({
+        where: { userId: id }
+      });
+      
+      // Then delete the user
+      await tx.user.delete({ where: { id } });
+    });
+    
     res.json({ message: 'Admin user deleted' });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });

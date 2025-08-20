@@ -65,6 +65,44 @@ export const deleteContactMessage = async (req: Request, res: Response) => {
   }
 };
 
+// Admin: Update contact message status
+export const updateContactMessageStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate status
+    const validStatuses = ['new', 'read', 'replied'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        error: 'Invalid status. Must be one of: new, read, replied' 
+      });
+    }
+
+    // Check if message exists
+    const existingMessage = await prisma.contactMessage.findUnique({ 
+      where: { id } 
+    });
+    
+    if (!existingMessage) {
+      return res.status(404).json({ error: 'Contact message not found' });
+    }
+
+    // Update the status
+    const updatedMessage = await prisma.contactMessage.update({
+      where: { id },
+      data: { status }
+    });
+
+    res.json({
+      message: 'Contact message status updated successfully',
+      data: updatedMessage
+    });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
 // Admin: Export contact messages to Excel
 export const exportContactMessages = async (req: Request, res: Response) => {
   try {

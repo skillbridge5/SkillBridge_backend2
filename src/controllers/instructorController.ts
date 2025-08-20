@@ -57,11 +57,12 @@ export const getInstructorById = async (req: Request, res: Response) => {
 export const createInstructor = async (req: Request, res: Response) => {
   try {
     const { name, email, phone, yearsOfExperience, bio, status, rating, students, expertise } = req.body;
+    const normalizedEmail = (email ?? '').trim().toLowerCase();
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
     }
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return res.status(409).json({ error: 'User with this email already exists' });
     }
@@ -70,7 +71,7 @@ export const createInstructor = async (req: Request, res: Response) => {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         password: defaultPassword,
         role: 'INSTRUCTOR',
       },
@@ -151,8 +152,35 @@ export const updateInstructor = async (req: Request, res: Response) => {
 export const deleteInstructor = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.instructorExpertise.deleteMany({ where: { instructorId: id } });
-    await prisma.instructorProfile.delete({ where: { id } });
+    
+    // First get the instructor profile to find the userId
+    const instructorProfile = await prisma.instructorProfile.findUnique({
+      where: { id },
+      select: { userId: true }
+    });
+    
+    if (!instructorProfile) {
+      return res.status(404).json({ error: 'Instructor not found' });
+    }
+    
+    // Delete in a transaction to ensure data consistency
+    await prisma.$transaction(async (tx) => {
+      // Delete instructor expertise first
+      await tx.instructorExpertise.deleteMany({ 
+        where: { instructorId: id } 
+      });
+      
+      // Delete instructor profile
+      await tx.instructorProfile.delete({ 
+        where: { id } 
+      });
+      
+      // Finally delete the user
+      await tx.user.delete({ 
+        where: { id: instructorProfile.userId } 
+      });
+    });
+    
     res.json({ message: 'Instructor deleted' });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
